@@ -24,44 +24,15 @@ import sensor_msgs.point_cloud2 as pc
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
 from std_msgs.msg import Header, ColorRGBA
+
 # import bgsubtract as BG
 
 # from openpose_ros_msgs.msg import *
 pc_li = PointCloud()
 
-laserSettings, laserinput =({},[])
-# taken from wiki.ros.org/laser_geometry
-def scan_cb(msg):
-    # convert the message of type LaserScan to a PointCloud2
-    pc2_msg = lp.projectLaser(msg)
-
-    # now we can do something with the PointCloud2 for example:
-    # publish it
-    pc_pub.publish(pc2_msg)
-
-    # convert it to a generator of the individual points
-    point_generator = pc2.read_points(pc2_msg)
-
-    # we can access a generator in a loop
-    sum = 0.0
-    num = 0
-    for point in point_generator:
-        if not math.isnan(point[2]):
-            sum += point[2]
-            num += 1
-    # we can calculate the average z value for example
-    print(str(sum / num))
-
-    # or a list of the individual points which is less efficient
-    point_list = pc2.read_points_list(pc2_msg)
-
-    # we can access the point list with an index, each element is a namedtuple
-    # we can access the elements by name, the generator does not yield namedtuples!
-    # if we convert it to a list and back this possibility is lost
-    print(point_list[len(point_list) / 2].x)
+laserSettings, laserinput = ({}, [])
 
 def make_PC_from_Laser(laser_in):
-
     # if len(laser_list_in) < 1:
     #     return []
 
@@ -88,6 +59,7 @@ def make_PC_from_Laser(laser_in):
     # laser_list_in.pop()
     return point_cloud_out
 
+
 def updateLaser(data):
     global laserSettings, laserinput, pc_li
 
@@ -101,19 +73,19 @@ def updateLaser(data):
         laserSettings["range_min"] = data.range_min
         laserSettings["range_max"] = data.range_max
     # build_bg(data)
-    pc_li =  make_PC_from_Laser(data)
+    pc_li = make_PC_from_Laser(data)
 
 
 if __name__ == '__main__':
 
     # naming the new node that can be used in launch files
-    rospy.init_node('calibrate_hog')
+    rospy.init_node('calibrate_duck')
 
     # t = geometry_msgs.msg.TransformStamped()
     # br = tf2_ros.TransformBroadcaster()
 
-    laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser, queue_size=1)
-    bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
+    laserList1 = rospy.Subscriber("/duck/scan0", LaserScan, updateLaser, queue_size=1)
+    bg_pub = rospy.Publisher('/bg_cloud2', PointCloud, queue_size=10)
 
     # setting the transform frame names (can be found declared in the launch file)
     # t.header.frame_id = "map"
@@ -128,9 +100,9 @@ if __name__ == '__main__':
         # declaring the node for publishing the new point cloud data (for comparing)
         # li_temp = make_PC_from_Laser(laserinput)
         # if pc_li != []:
-            # tempPose = Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1))
-            # foreground = BG.getForeground(li_temp, tempPose, laserSettings["angle_min"], laserSettings["angle_max"])
-        pc_li.header.frame_id = "bg_cloud"
+        # tempPose = Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1))
+        # foreground = BG.getForeground(li_temp, tempPose, laserSettings["angle_min"], laserSettings["angle_max"])
+        pc_li.header.frame_id = "bg_cloud2"
         bg_pub.publish(pc_li)
         # print(len(laserinput))?
 
