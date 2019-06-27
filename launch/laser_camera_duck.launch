@@ -19,6 +19,7 @@
   </node>
 
   <node pkg="tf2_ros" type="static_transform_publisher" name="link4_broadcaster" args="-.5 -.5 0 0 0 0 1 map laser_duck" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link14_broadcaster" args="-.5 -.5 0 0 0 0 1 map bg_cloud2" />
 
  </group>
 </launch>
