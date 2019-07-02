@@ -4,6 +4,7 @@ import cv2
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 import rospy
 import copy
 from sensor_msgs.msg import LaserScan
@@ -30,12 +31,15 @@ def updateLaser(data):
         # If not inf, then plot the point in black
         if abs(xcoor) < magnitude or abs(ycoor) < magnitude:
             blank_image[int(10 * round(xcoor,1) + magnitude), int( 10 * round(ycoor,1) + magnitude)] = [0,0,0]
-            blank_image[int(10 * round(xcoor, 1) + magnitude) + 1, int(10 * round(ycoor, 1) + magnitude)] = [0, 0, 0]
-            blank_image[int(10 * round(xcoor, 1) + magnitude), int(10 * round(ycoor, 1) + magnitude) + 1] = [0, 0, 0]
-            blank_image[int(10 * round(xcoor, 1) + magnitude)+ 1, int(10 * round(ycoor, 1) + magnitude) + 1] = [0, 0, 0]
+            # blank_image[int(10 * round(xcoor, 1) + magnitude) + 1, int(10 * round(ycoor, 1) + magnitude)] = [0, 0, 0]
+            # blank_image[int(10 * round(xcoor, 1) + magnitude), int(10 * round(ycoor, 1) + magnitude) + 1] = [0, 0, 0]
+            # blank_image[int(10 * round(xcoor, 1) + magnitude)+ 1, int(10 * round(ycoor, 1) + magnitude) + 1] = [0, 0, 0]
 
-def hough():
-    img = cv2.imread('/home/tbessho/catkin_ws/src/laser_camera_calibration/scripts/coins.jpg', 0)
+    new_im = Image.fromarray(blank_image)
+    new_im.save("image.png")
+
+    img = cv2.imread('image.png', 0)
+    Image.open("image.png").show()
     img = cv2.medianBlur(img, 5)
     cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -57,7 +61,7 @@ def hough():
 
 
 
-        # if "angle_increment" not in laserSettings:
+    # if "angle_increment" not in laserSettings:
         #     laserSettings["angle_min"] = data.angle_min
         #     laserSettings["angle_max"] = data.angle_max
         #     laserSettings["array_size"] = len(data.ranges)
@@ -71,11 +75,10 @@ if __name__ == '__main__':
 
 
     # Naming the new node that can be used in launch files
-    # rospy.init_node('hough_hog')
+    rospy.init_node('hough_hog')
 
     # Create the subscriber for the LaserScan
-    # laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser, queue_size=1)
+    laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser, queue_size=1)
 
-    hough()
 
-    # rospy.spin()
+    rospy.spin()
