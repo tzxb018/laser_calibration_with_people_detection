@@ -44,10 +44,10 @@ show_time = 10
 ind_list = []
 r = .075
 center = (0, 0)
-center_index = 300
+center_index = 0
 center_angle = 0
 rate = 0.05
-error = 0.0001
+error = 0.001
 
 laserSettings = {}
 max_range = 40.0
@@ -82,43 +82,53 @@ def getCluster(laserScan, beginInd, endInd):
     if stopInd > len(laserScan.ranges) - 1:
         stopInd = len(laserScan.ranges) - 1
 
-    print(startInd,stopInd)
+    # print(startInd,stopInd)
 
+    # converting laser scan into point cloud
+    pc_temp = make_PC_from_Laser(laserScan)
 
     # get midpoint of ranges
     list_inds = []
-    closest = max_range
-    midrange = laserScan.ranges[startInd]
-    midrangecount = 1
+    midPoint = pc_temp[startInd]
     for cind in range(startInd + 1, stopInd):
-        indrange = laserScan.ranges[cind]
-        if indrange > max_range:
-            continue
-        if indrange < closest:
-            closest = indrange
-        midrange = midrange + indrange
-        midrangecount += 1
+        testPoint = pc_temp[cind]
+        midPoint = ((midPoint[0] + testPoint[0]) / 2, (midPoint[1] + testPoint[1]) / 2, (midPoint[2] + testPoint[2]) / 2)
+        # print("dist %f"%(dist_from_center(testPoint,midPoint)))
+        if dist_from_center(testPoint, midPoint) > r + error:
+            break
+        else:
+            list_inds.append(cind)
+            # print("midpoint" + str(midPoint))
 
-    midrange = midrange / midrangecount
 
-    midrange = (closest + midrange) / 2
+    return list_inds, midPoint
+    #     if indrange > max_range:
+    #         continue
+    #     if indrange < closest:
+    #         closest = indrange
+    #     midrange = midrange + indrange
+    #     midrangecount += 1
+    #
+    # midrange = midrange / midrangecount
+    #
+    # midrange = (closest + midrange) / 2
 
     # get suspected points for a person
-    frontrange = 0.0
-    frontcount = 0
-    for cind in range(startInd, stopInd):
-        indrange = laserScan.ranges[cind]
-        if indrange <= midrange and not math.isinf(indrange):
-            list_inds.append(cind)
-            frontrange = frontrange + laserScan.ranges[cind]
-            frontcount += 1
-
-
-    if frontcount == 0:
-        # list_inds[0] = laserScan.ranges[0]
-        return list_inds, laserScan.ranges[startInd]
-
-    return list_inds, frontrange / frontcount
+    # frontrange = 0.0
+    # frontcount = 0
+    # for cind in range(startInd, stopInd):
+    #     indrange = laserScan.ranges[cind]
+    #     if indrange <= midPoint and not math.isinf(indrange):
+    #         list_inds.append(cind)
+    #         frontrange = frontrange + laserScan.ranges[cind]
+    #         frontcount += 1
+    #
+    #
+    # if frontcount == 0:
+    #     # list_inds[0] = laserScan.ranges[0]
+    #     return list_inds, laserScan.ranges[startInd]
+    #
+    # return list_inds, frontrange / frontcount
 
 
 def dist_from_center(point, center):
@@ -143,7 +153,7 @@ def update_center(points):
             gradient = (gradient[0] / len(points), gradient[1] / len(points))
             new_center = (new_center[0] - rate * gradient[0], new_center[1] - rate * gradient[1])
 
-    # print("center, new center",center,new_center)
+        print("center, new center",center,new_center)
         return new_center
     else:
         return
@@ -528,9 +538,10 @@ def showAnkleMarkers():
     #     tfDist_cam_laser = 0.24
     # test
     while not rospy.is_shutdown():
-        if lastLaser :
 
-            testMarks = MarkerArray()
+        testMarks = MarkerArray()
+
+        if lastLaser :
             # closest = max_range
             # midrange = 0.0
             # midrangecount = 0
@@ -553,45 +564,113 @@ def showAnkleMarkers():
             # 		ind_list.append(cind)
 
             pcloud = make_PC_from_Laser(lastLaser)
-            ind_list, midrange = getCluster(lastLaser, center_index - 20, center_index + 20)
-            print(ind_list)
-            print(midrange)
+            groups = []
+            while center_index < len(lastLaser.ranges):
+                # finding where to start the cluster (if the point cloud is not inf)
+                ind_list = []
+                if not math.isinf(lastLaser.ranges[center_index]):
+                    ind_list, midrange = getCluster(lastLaser, center_index, len(lastLaser.ranges))
+                    # points needed to be considered a circle threshold can change here
+                    if len(ind_list) > 25:
+                        groups.append((midrange, ind_list))
+                    center_index += len(ind_list) + 1
+                else:
+                    center_index += 1
 
-            # print(ind_list,len(lastLaser.ranges),len(pcloud))
-            personPoints = []
-            # print(len(pcloud))
-            for pt_in_cloud in ind_list:
-                personPoints.append(pcloud[pt_in_cloud])
+
+
+
+            # Updating the centers for each group to find the correct center of the circle using gradient descent
+            id = 0
+            for g in groups:
+                print(g)
+                point_for_update = []
+                for i in range(g[1][0], g[1][-1]):
+                    point_for_update.append(pcloud[i])
+                # print(point_for_update)
+                center = g[0]
+                updated_center = update_center(point_for_update)
+                ind_list = []
+                testMarks.markers.append(Marker())
+                testMarks.markers[-1].id = id
+                testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+                try:
+                    (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
+                except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                    continue
+                print("trans")
+                print(trans)
+                testMarks.markers[-1].pose = Pose(Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]), Quaternion(0, 0, 0, 1))
+                testMarks.markers[-1].type = Marker.SPHERE
+                testMarks.markers[-1].scale = Vector3(r, r, .01)
+                testMarks.markers[-1].action = 0
+                testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
+                testMarks.markers[-1].header = Header(frame_id="map")
+                # testMarks.markers[-1].frame_locked = True
+                testMarks.markers[-1].ns = "circles"
+                id += 1
+        circleMarks.publish(testMarks)
+
+                # print("updated" + str(updated_center))
+
+                # rate = rospy.Rate(1)
+                # circleMarker = Marker()
+                # circleMarker.header.frame_id = "/map"
+                # circleMarker.header.stamp = rospy.get_rostime()
+                # circleMarker.ns = "circles"
+                # circleMarker.id = 0
+                # circleMarker.type = Marker.SPHERE
+                # circleMarker.action = 0
+                # circleMarker.pose.position.x = updated_center[0]
+                # circleMarker.pose.position.y = updated_center[1]
+                # circleMarker.pose.position.z = 0
+                # circleMarker.pose.orientation.x = 0
+                # circleMarker.pose.orientation.y = 0
+                # circleMarker.pose.orientation.z = 0.0
+                # circleMarker.pose.orientation.w = 1.0
+                # circleMarker.color = ColorRGBA(.3, .5, .6, .1)
+                # circleMarker.lifetime = rospy.Duration(10)
+                # circleMarks.publish(circleMarker)
+
+            # rospy.spin()
+
+
+            # # print(groups)
+            #
+            # # print(ind_list,len(lastLaser.ranges),len(pcloud))
+            # personPoints = []
+            # # print(len(pcloud))
+            # for pt_in_cloud in ind_list:
+            #     personPoints.append(pcloud[pt_in_cloud])
+            # # testMarks.markers.append(Marker())
+            # # testMarks.markers[-1].id = pt_in_cloud
+            # # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+            # # testMarks.markers[-1].type = Marker.CUBE
+            # # testMarks.markers[-1].scale = Vector3(.05,.05,.05)
+            # # testMarks.markers[-1].action = 0
+            # # testMarks.markers[-1].color = ColorRGBA(.5,.5,1,1)
+            # # testMarks.markers[-1].header = Header(frame_id = "base")
+            # # # testMarks.markers[-1].frame_locked = True
+            # # testMarks.markers[-1].ns = "circle_points"
+            # # print(personPoints)
+            #
+            # center = update_center(personPoints)
+            # print(center)
+            # # center_index = ind_angle(math.atan2(center[1], center[0]))
+            # print("center index %d"%(center_index))
+            # ind_list = []
             # testMarks.markers.append(Marker())
-            # testMarks.markers[-1].id = pt_in_cloud
+            # testMarks.markers[-1].id = 0
             # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-            # testMarks.markers[-1].pose = Pose(Point(pcloud[pt_in_cloud][0],pcloud[pt_in_cloud][1],0),Quaternion(0,0,0,1))
-            # testMarks.markers[-1].type = Marker.CUBE
-            # testMarks.markers[-1].scale = Vector3(.05,.05,.05)
+            # testMarks.markers[-1].pose = Pose(Point(center[0], center[1], -.2), Quaternion(0, 0, 0, 1))
+            # testMarks.markers[-1].type = Marker.SPHERE
+            # testMarks.markers[-1].scale = Vector3(r, r, .01)
             # testMarks.markers[-1].action = 0
-            # testMarks.markers[-1].color = ColorRGBA(.5,.5,1,1)
-            # testMarks.markers[-1].header = Header(frame_id = "base")
+            # testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
+            # testMarks.markers[-1].header = Header(frame_id="map")
             # # testMarks.markers[-1].frame_locked = True
-            # testMarks.markers[-1].ns = "circle_points"
-            # print(personPoints)
-
-            center = update_center(personPoints)
-            print(center)
-            center_index = ind_angle(math.atan2(center[1], center[0]))
-            print("center index %d"%(center_index))
-            ind_list = []
-            testMarks.markers.append(Marker())
-            testMarks.markers[-1].id = 0
-            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-            testMarks.markers[-1].pose = Pose(Point(center[0], center[1], -.2), Quaternion(0, 0, 0, 1))
-            testMarks.markers[-1].type = Marker.SPHERE
-            testMarks.markers[-1].scale = Vector3(r, r, .01)
-            testMarks.markers[-1].action = 0
-            testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
-            testMarks.markers[-1].header = Header(frame_id="map")
-            # testMarks.markers[-1].frame_locked = True
-            testMarks.markers[-1].ns = "circles"
-            circleMarks.publish(testMarks)
+            # testMarks.markers[-1].ns = "circles"
+            # circleMarks.publish(testMarks)
 
             # rospy.spin()
 
