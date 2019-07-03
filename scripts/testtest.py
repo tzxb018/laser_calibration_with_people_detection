@@ -99,12 +99,12 @@ def getCluster(laserScan, beginInd, endInd):
 
     # go through the points on the laser scan to see how big the group will get
     for cind in range(startInd + 1, stopInd):
-
+        ckind = cind - startInd
         # the point being checked
         testPoint = pc_temp[cind]
 
         # finding the midpoint between the tested point and the mid point
-        midPoint = ((midPoint[0] + testPoint[0]) / 2, (midPoint[1] + testPoint[1]) / 2, (midPoint[2] + testPoint[2]) / 2)
+        midPoint = ((ckind * midPoint[0] + testPoint[0]) / (ckind + 1), (ckind * midPoint[1] + testPoint[1]) / (ckind + 1), (ckind * midPoint[2] + testPoint[2]) / (ckind + 1))
         # print("dist %f"%(dist_from_center(testPoint,midPoint)))
 
         # if the distance between the tested point and the middle is bigger than the radius (plus error) then the group ends
@@ -149,7 +149,7 @@ def dist_from_center(point, center):
     square_dist = (point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2
     return square_dist ** (0.5)
 
-# update center will find the true center of the possible circle
+# update_center will find the true center of the possible circle using gradient descent
 def update_center(points):
     global center, r
 
@@ -527,10 +527,10 @@ def showAnkleMarkers():
     global ind_list, center, center_index
     global laserList, laserSettings
 
-    # initalize the node for ROS
+    # initialize the node for ROS
     rospy.init_node("ankle_markers")
 
-    # initilze the subscribers and the publishers for the laser, point cloud, tf, and the markers
+    # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
     circleMarks = rospy.Publisher("/possible_circles", MarkerArray, queue_size=10)
     bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
@@ -599,7 +599,7 @@ def showAnkleMarkers():
                     center_index += 1
 
             # Updating the centers for each group to find the correct center of the circle using gradient descent
-            id = 0 # seperate id used for each marker in the marker array
+            id = 0 # separate id used for each marker in the marker array
 
             # iterate through each cluster
             for g in clusters:
@@ -641,11 +641,11 @@ def showAnkleMarkers():
                 testMarks.markers[-1].scale = Vector3(r, r, .01)
                 testMarks.markers[-1].action = 0
                 testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
-                testMarks.markers[-1].header = Header(frame_id="map")
+                testMarks.markers[-1].header = lastLaser.header# Header(frame_id="/map")
                 testMarks.markers[-1].ns = "circles"
                 id += 1 # keep the ids unique
 
-            # publish the marker array to be dispalyed on Rviz
+            # publish the marker array to be displayed on Rviz
             circleMarks.publish(testMarks)
             print("****************************************************************************88")
 
