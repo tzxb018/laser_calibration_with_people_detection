@@ -39,7 +39,7 @@ camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
 
-show_time = 10
+show_time = 1
 
 ind_list = []
 r = .075
@@ -50,7 +50,7 @@ rate = 0.05
 error = 0.001
 
 laserSettings = {}
-max_range = 40.0
+max_range = 25.0
 center_mass_points = (0, 1, 2, 5, 8, 9, 10, 11, 12, 13, 16, 17)
 
 camAngleOff = -7.807827289 / 2  # only for test ros bag info, must be changed for tf calibrated cameras on live data
@@ -63,7 +63,9 @@ def ind_angle(b_angle):
     # print("bangle lansermin",b_angle,laserSettings["angle_min"])
     return int((b_angle - laserSettings["angle_min"]) / laserSettings["angle_increment"])
 
-
+# takes in the laser scan and finds a cluster of laser points that could be a circle
+# returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
+# important to note that this center will change with gradient descent in another function (not the true center)
 def getCluster(laserScan, beginInd, endInd):
     # print("before adjust",beginInd,endInd)
     # cmake sure endInd is after beginInd
@@ -88,19 +90,31 @@ def getCluster(laserScan, beginInd, endInd):
     pc_temp = make_PC_from_Laser(laserScan)
 
     # get midpoint of ranges
+    # list of indexes that are in the cluster
     list_inds = []
+
+    # init the midpoint (will be the first point)
     midPoint = pc_temp[startInd]
+    # startPoint = pc_temp[startInd]
+
+    # go through the points on the laser scan to see how big the group will get
     for cind in range(startInd + 1, stopInd):
+
+        # the point being checked
         testPoint = pc_temp[cind]
+
+        # finding the midpoint between the tested point and the mid point
         midPoint = ((midPoint[0] + testPoint[0]) / 2, (midPoint[1] + testPoint[1]) / 2, (midPoint[2] + testPoint[2]) / 2)
         # print("dist %f"%(dist_from_center(testPoint,midPoint)))
+
+        # if the distance between the tested point and the middle is bigger than the radius (plus error) then the group ends
         if dist_from_center(testPoint, midPoint) > r + error:
             break
-        else:
+        else: #extend the group to the next point if the tested point is within the length of the radius to the midpoint
             list_inds.append(cind)
             # print("midpoint" + str(midPoint))
 
-
+    # return the list of indexes in the group and the purposed midpoint of the possible circle (will be changed later with gradient descent)
     return list_inds, midPoint
     #     if indrange > max_range:
     #         continue
@@ -135,7 +149,7 @@ def dist_from_center(point, center):
     square_dist = (point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2
     return square_dist ** (0.5)
 
-
+# update center will find the true center of the possible circle
 def update_center(points):
     global center, r
 
@@ -493,8 +507,6 @@ def updateLaser(data):
         laserSettings["range_min"] = data.range_min
         laserSettings["range_max"] = data.range_max
         # build_bg(data)
-
-
 # def build_bg(laser_scan_in):
 #     global bg_pub, adjusted_laser
 #     laser_scan_out = copy.deepcopy(laser_scan_in)
@@ -511,36 +523,25 @@ def updateLaser(data):
 
 
 def showAnkleMarkers():
-    global ankleMarks, adjusted_laser, bg_pub, tfDist_cam_laser, tf_listen
+    global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
     global laserList, laserSettings
-    rospy.init_node("ankle_markers")
-    # humanList = rospy.Subscriber("/openpose_ros/human_list", OpenPoseHumanList, updateHumanList)
-    laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
 
-    # ankleMarks = rospy.Publisher("/ankle_markers", MarkerArray, queue_size=10)
+    # initalize the node for ROS
+    rospy.init_node("ankle_markers")
+
+    # initilze the subscribers and the publishers for the laser, point cloud, tf, and the markers
+    laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
     circleMarks = rospy.Publisher("/possible_circles", MarkerArray, queue_size=10)
-    # adjusted_laser = rospy.Publisher("/scan/synced_laser", LaserScan, queue_size=10)
     bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
-    # print(laserSettings)
 
-    # ros.sleep(2)
-    # tf_listen.waitForTransform("/usb_cam", "/scan", rospy.Time(), rospy.Duration(tfWait))
-
-    # try:
-    #     tf_listen.waitForTransform("/usb_cam", "/scan", rospy.Time(), rospy.Duration(tfWait))
-    #     (trans, rot) = tf_listen.lookupTransform("usb_cam", "scan", rospy.Time(0))
-    #     tfDist_cam_laser = trans[0]
-    # except Exception as e:
-    #     print(e)
-    #     print("Using defaulted dist offset of 0.24.")
-    #     tfDist_cam_laser = 0.24
-    # test
     while not rospy.is_shutdown():
 
+        # the MarkerArray will store all the circles to be put on Rviz
         testMarks = MarkerArray()
 
+        # if there is a laser scan being read in
         if lastLaser :
             # closest = max_range
             # midrange = 0.0
@@ -562,54 +563,91 @@ def showAnkleMarkers():
             # 	indrange = lastLaser.ranges[cind]
             # 	if indrange <= midrange:
             # 		ind_list.append(cind)
+            # print("last laser works")
 
+            # update the laser scan (this line may not be needed)
+            updateLaser(lastLaser)
+
+            # convert the new laser scan into a point cloud
             pcloud = make_PC_from_Laser(lastLaser)
-            groups = []
+
+            # possible laser point clusters that could make up a circle
+            clusters = []
+
+            # init the angle index being checked (start at 0)
+            center_index = 0
+
+            # loop through all the possible indexes
             while center_index < len(lastLaser.ranges):
-                # finding where to start the cluster (if the point cloud is not inf)
+
+                # list of indexes making up the cluster
                 ind_list = []
+
+                # finding where to start the cluster (if the point cloud is not inf)
                 if not math.isinf(lastLaser.ranges[center_index]):
-                    ind_list, midrange = getCluster(lastLaser, center_index, len(lastLaser.ranges))
-                    # points needed to be considered a circle threshold can change here
-                    if len(ind_list) > 25:
-                        groups.append((midrange, ind_list))
+                    # obtaining the list of indexes making up the cluster and the possible center of the circle
+                    ind_list, midrange = getCluster(lastLaser, center_index, len(lastLaser.ranges)) # search to the whole scan until the shape is gone
+                    # points needed to be considered a circle threshold
+                    if len(ind_list) > 50:
+                        # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
+                        clusters.append((midrange, ind_list))
+
+                    # iterate to the next laser point available
                     center_index += len(ind_list) + 1
-                else:
+                else: #if the certain index at this angle is inf, don't bother running through the algorithm
+                    # iterate to the next laser point available
                     center_index += 1
 
-
-
-
             # Updating the centers for each group to find the correct center of the circle using gradient descent
-            id = 0
-            for g in groups:
+            id = 0 # seperate id used for each marker in the marker array
+
+            # iterate through each cluster
+            for g in clusters:
                 print(g)
+
+                # list of points in each cluster
+                # this array will be run through update_center (gradient descent) to find the true center of the circle
                 point_for_update = []
+
+                # add each point (from point cloud) given the indexes in the cluster
+                # possible error: do the indexes of the laser scan and the point cloud match?
                 for i in range(g[1][0], g[1][-1]):
+                    # add the x,y,z rectangular point into the array for use in update_center
                     point_for_update.append(pcloud[i])
                 # print(point_for_update)
-                center = g[0]
+
+                # updated center with the given points in this cluster
                 updated_center = update_center(point_for_update)
-                ind_list = []
+
+                # add a new marker to the marker array
                 testMarks.markers.append(Marker())
+
+                # keep the marker ids unique
                 testMarks.markers[-1].id = id
+
+                # determining how long the markers will stay up in Rviz
                 testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+                # find the tf of the laser to the parent map
+                # this tf will be used to translate the circles to match the laser's map
                 try:
                     (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                     continue
-                print("trans")
-                print(trans)
+
+                # postioning will be relative to the tf of the laser
                 testMarks.markers[-1].pose = Pose(Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]), Quaternion(0, 0, 0, 1))
                 testMarks.markers[-1].type = Marker.SPHERE
                 testMarks.markers[-1].scale = Vector3(r, r, .01)
                 testMarks.markers[-1].action = 0
                 testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
                 testMarks.markers[-1].header = Header(frame_id="map")
-                # testMarks.markers[-1].frame_locked = True
                 testMarks.markers[-1].ns = "circles"
-                id += 1
-        circleMarks.publish(testMarks)
+                id += 1 # keep the ids unique
+
+            # publish the marker array to be dispalyed on Rviz
+            circleMarks.publish(testMarks)
+            print("****************************************************************************88")
 
                 # print("updated" + str(updated_center))
 
