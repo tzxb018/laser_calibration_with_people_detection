@@ -54,6 +54,7 @@ lAnkle = (0, 0)
 rAnkle = (0, 0)
 
 pc_li = PointCloud()
+isFinshed = True
 
 
 def ind_angle(b_angle):
@@ -65,6 +66,8 @@ def ind_angle(b_angle):
 # returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
 # important to note that this center will change with gradient descent in another function (not the true center)
 def getCluster(laserScan, beginInd, endInd):
+    print("get cluster starts")
+    print(len(pc_li.points))
     # print("before adjust",beginInd,endInd)
     # cmake sure endInd is after beginInd
     stopInd = endInd
@@ -79,11 +82,11 @@ def getCluster(laserScan, beginInd, endInd):
     # make sure range is in bounds
     if startInd < 0:
         startInd = 0
-    if stopInd > len(laserScan.ranges) - 1:
-        stopInd = len(laserScan.ranges) - 1
+    if stopInd > len(pc_li.points) - 1:
+        stopInd = len(pc_li.points) - 1
 
-    # print("New Cluster")
-    # print(startInd,stopInd)
+    print("New Cluster")
+    print(startInd,stopInd)
 
     # converting laser scan into point cloud
     # pc_temp = make_PC_from_Laser(laserScan)
@@ -107,7 +110,7 @@ def getCluster(laserScan, beginInd, endInd):
         testPoint = convert_point(pc_li.points[cind])
 
         # finding the midpoint between the tested point and the mid point
-        print(midPoint)
+        # print(midPoint)
         midPoint = (
             (ckind * midPoint[0] + testPoint[0]) / (ckind + 1), (ckind * midPoint[1] + testPoint[1]) / (ckind + 1),
             (ckind * midPoint[2] + testPoint[2]) / (ckind + 1))
@@ -120,6 +123,10 @@ def getCluster(laserScan, beginInd, endInd):
         else:  # extend the group to the next point if the tested point is within the length of the radius to the midpoint
             list_inds.append(cind)
             # print("midpoint" + str(midPoint))
+
+    print("returns get cluster")
+    print(len(pc_li.points))
+
     # return the list of indexes in the group and the purposed midpoint of the possible circle (will be changed later with gradient descent)
     return list_inds, midPoint, midPointArr
 
@@ -164,6 +171,9 @@ def dist_from_center(point, center):
 
 # update_center will find the true center of the possible circle using gradient descent
 def update_center(points):
+    print("start update center")
+    print(len(pc_li.points))
+
     global center, r
 
     if len(points) > 0:
@@ -180,7 +190,10 @@ def update_center(points):
             gradient = (gradient[0] / len(points), gradient[1] / len(points))
             new_center = (new_center[0] - rate * gradient[0], new_center[1] - rate * gradient[1])
 
-        print("center, new center", center, new_center)
+        # print("center, new center", center, new_center)
+        print("end update center")
+        print(len(pc_li.points))
+
         return new_center
     else:
         return
@@ -471,6 +484,10 @@ def update_center(points):
 #             # print(marks)
 
 def make_PC_from_Laser(laser_in):
+
+    print("start make pc from laser")
+    print(len(pc_li.points))
+
     # Initialize a point cloud object
     point_cloud_out = PointCloud()
 
@@ -490,6 +507,9 @@ def make_PC_from_Laser(laser_in):
     for a in cloud:
         point_cloud_out.points.append(Point(a[0], a[1], a[2]))
         point_cloud_out.channels[0].values.append(.99)
+
+    print("end make pc from laser")
+    print(len(pc_li.points))
 
     # Returns the formatted point cloud
     return point_cloud_out
@@ -512,22 +532,30 @@ def make_PC_from_Laser(laser_in):
 
 def updateLaser(data):
     global lastLaser, pc_li
+    print("IS FINISEDH?" + str(isFinshed))
+    if isFinshed:
+        print("START UPDATE LASER " + str(len(pc_li.points)))
 
-    lastLaser = copy.deepcopy(data)
+        lastLaser = copy.deepcopy(data)
 
-    # print("updateLaser")
+        # print("updateLaser")
 
-    if "angle_increment" not in laserSettings:
-        laserSettings["angle_min"] = data.angle_min
-        laserSettings["angle_max"] = data.angle_max
-        laserSettings["array_size"] = len(data.ranges)
-        laserSettings["angle_increment"] = data.angle_increment
-        laserSettings["range_min"] = data.range_min
-        laserSettings["range_max"] = data.range_max
-        # build_bg(data)
+        if "angle_increment" not in laserSettings:
+            laserSettings["angle_min"] = data.angle_min
+            laserSettings["angle_max"] = data.angle_max
+            laserSettings["array_size"] = len(data.ranges)
+            laserSettings["angle_increment"] = data.angle_increment
+            laserSettings["range_min"] = data.range_min
+            laserSettings["range_max"] = data.range_max
+            # build_bg(data)
 
-    # Convert the inputted LaserScan into a Point Cloud
-    pc_li = make_PC_from_Laser(data)
+        # Convert the inputted LaserScan into a Point Cloud
+        print ("FINSIEHD UPDATE LASER")
+        print(len(pc_li.points))
+
+        pc_li = make_PC_from_Laser(data)
+    else:
+        return
 
 
 # def build_bg(laser_scan_in):
@@ -549,6 +577,8 @@ def showAnkleMarkers():
     global ind_list, center, center_index
     global laserList, laserSettings
 
+    print("start")
+
     # initialize the node for ROS
     rospy.init_node("ankle_markers")
 
@@ -558,10 +588,8 @@ def showAnkleMarkers():
     bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
 
-    rate = rospy.Rate(10.0)
     # Set the frame for Point Cloud in Rviz
     pc_li.header.frame_id = "bg_cloud"
-
     while not rospy.is_shutdown():
 
         # the MarkerArray will store all the circles to be put on Rviz
@@ -594,6 +622,8 @@ def showAnkleMarkers():
             # update the laser scan (this line may not be needed)
             updateLaser(lastLaser)
 
+            isFinshed = False
+
             # convert the new laser scan into a point cloud
             # pcloud = make_PC_from_Laser(lastLaser)
 
@@ -613,6 +643,7 @@ def showAnkleMarkers():
 
                 # list of indexes making up the cluster
                 ind_list = []
+                # print(len(pc_li.points))
 
                 # finding where to start the cluster (if the point cloud is not inf)
                 # if not math.isinf(lastLaser.ranges[center_index]):
@@ -666,7 +697,7 @@ def showAnkleMarkers():
             # iterate through each cluster
             for g in clusters:
                 print(g)
-
+                # print(len(pc_li.points))
                 # list of points in each cluster
                 # this array will be run through update_center (gradient descent) to find the true center of the circle
                 point_for_update = []
@@ -715,9 +746,11 @@ def showAnkleMarkers():
             # Publish the Point Cloud data
             # print(pc_li)
             bg_pub.publish(pc_li)
-            rospy.spin()
-
+            isFinshed = True
             print("****************************************************************************")
+
+
+
 
             # print("updated" + str(updated_center))
 
