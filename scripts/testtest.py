@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-# -*- coding: utf-8 -*-
-# @Author: andrew
-# @Date:   2018-07-16 14:37:41
-# @Last Modified by:   ahpalmerUNR
-# @Last Modified time: 2018-11-04 18:00:30
-
 import rospy
 import math
 import copy
@@ -92,14 +86,15 @@ def getCluster(laserScan, beginInd, endInd):
     # print(startInd,stopInd)
 
     # converting laser scan into point cloud
-    pc_temp = make_PC_from_Laser(laserScan)
+    # pc_temp = make_PC_from_Laser(laserScan)
 
     # get midpoint of ranges
     # list of indexes that are in the cluster
     list_inds = []
 
     # init the midpoint (will be the first point)
-    midPoint = pc_temp[startInd]
+    midPoint = pc_li.points[startInd]
+    midPoint = convert_point(midPoint)
     # startPoint = pc_temp[startInd]
 
     # FOR TESTING
@@ -109,12 +104,13 @@ def getCluster(laserScan, beginInd, endInd):
     for cind in range(startInd + 1, stopInd):
         ckind = cind - startInd
         # the point being checked
-        testPoint = pc_temp[cind]
+        testPoint = convert_point(pc_li.points[cind])
 
         # finding the midpoint between the tested point and the mid point
+        print(midPoint)
         midPoint = (
-        (ckind * midPoint[0] + testPoint[0]) / (ckind + 1), (ckind * midPoint[1] + testPoint[1]) / (ckind + 1),
-        (ckind * midPoint[2] + testPoint[2]) / (ckind + 1))
+            (ckind * midPoint[0] + testPoint[0]) / (ckind + 1), (ckind * midPoint[1] + testPoint[1]) / (ckind + 1),
+            (ckind * midPoint[2] + testPoint[2]) / (ckind + 1))
         # print("dist %f"%(dist_from_center(testPoint,midPoint)))
         midPointArr.append(midPoint)
 
@@ -126,6 +122,7 @@ def getCluster(laserScan, beginInd, endInd):
             # print("midpoint" + str(midPoint))
     # return the list of indexes in the group and the purposed midpoint of the possible circle (will be changed later with gradient descent)
     return list_inds, midPoint, midPointArr
+
     #     if indrange > max_range:
     #         continue
     #     if indrange < closest:
@@ -153,6 +150,11 @@ def getCluster(laserScan, beginInd, endInd):
     #     return list_inds, laserScan.ranges[startInd]
     #
     # return list_inds, frontrange / frontcount
+
+
+def convert_point(point): # converts from a Point to a list
+    p = (point.x, point.y, point.z)
+    return p
 
 
 def dist_from_center(point, center):
@@ -184,54 +186,54 @@ def update_center(points):
         return
 
 
-def get_synced_laser(image_header):
-    global laserinput
-    closenessInd = 0
-    closeness = 10 ** 23
-    teststamp = copy.deepcopy(image_header.stamp)
-    imstamp = teststamp.nsecs
-    imstamp += teststamp.secs * 10 ** 9
+# def get_synced_laser(image_header):
+#     global laserinput
+#     closenessInd = 0
+#     closeness = 10 ** 23
+#     teststamp = copy.deepcopy(image_header.stamp)
+#     imstamp = teststamp.nsecs
+#     imstamp += teststamp.secs * 10 ** 9
+#
+#     for i in range(len(laserinput)):
+#         comparestamp = laserinput[i].header.stamp.nsecs
+#         comparestamp += laserinput[i].header.stamp.secs * 10 ** 9
+#         compare_closeness = math.fabs(comparestamp - imstamp)
+#         if compare_closeness < closeness:
+#             closeness = compare_closeness
+#             closenessInd = i
+#
+#     # print(closenessInd,len(laserinput))
+#     synced_laser = copy.deepcopy(laserinput[closenessInd])
+#     synced_laser.header.frame_id = '/scan'
+#
+#     laserinput = []
+#
+#     return synced_laser
 
-    for i in range(len(laserinput)):
-        comparestamp = laserinput[i].header.stamp.nsecs
-        comparestamp += laserinput[i].header.stamp.secs * 10 ** 9
-        compare_closeness = math.fabs(comparestamp - imstamp)
-        if compare_closeness < closeness:
-            closeness = compare_closeness
-            closenessInd = i
 
-    # print(closenessInd,len(laserinput))
-    synced_laser = copy.deepcopy(laserinput[closenessInd])
-    synced_laser.header.frame_id = '/scan'
-
-    laserinput = []
-
-    return synced_laser
-
-
-def ind_angle_matched(laserFrame, b_angle):
-    global tfDist_cam_laser
-    # print(laserSettings["angle_min"],laserSettings["angle_max"])
-
-    angleOff_min = 100.0
-    angleInd = 300
-    for tfx in xrange(0, len(laserFrame.ranges)):
-        ind = tfx
-        laser_angle = laserSettings["angle_min"] + ind * laserSettings["angle_increment"]
-        if laser_angle > math.pi / 2 or laser_angle < -math.pi / 2:
-            continue
-        laser_dist = laserFrame.ranges[ind]
-        law_sin = (math.sin(math.pi - laser_angle) * laser_dist) / (math.sin(b_angle))
-        result = laser_dist ** 2 - tfDist_cam_laser ** 2 - law_sin ** 2 + 2 * tfDist_cam_laser * law_sin * math.cos(
-            b_angle)
-        # print("angleoff_min",math.fabs(result))
-
-        if math.fabs(result) < angleOff_min:
-            angleInd = ind
-            angleOff_min = math.fabs(result)
-
-    # print("Angle Ind and AngleOff",angleInd,angleOff_min)
-    return angleInd
+# def ind_angle_matched(laserFrame, b_angle):
+#     global tfDist_cam_laser
+#     # print(laserSettings["angle_min"],laserSettings["angle_max"])
+#
+#     angleOff_min = 100.0
+#     angleInd = 300
+#     for tfx in xrange(0, len(laserFrame.ranges)):
+#         ind = tfx
+#         laser_angle = laserSettings["angle_min"] + ind * laserSettings["angle_increment"]
+#         if laser_angle > math.pi / 2 or laser_angle < -math.pi / 2:
+#             continue
+#         laser_dist = laserFrame.ranges[ind]
+#         law_sin = (math.sin(math.pi - laser_angle) * laser_dist) / (math.sin(b_angle))
+#         result = laser_dist ** 2 - tfDist_cam_laser ** 2 - law_sin ** 2 + 2 * tfDist_cam_laser * law_sin * math.cos(
+#             b_angle)
+#         # print("angleoff_min",math.fabs(result))
+#
+#         if math.fabs(result) < angleOff_min:
+#             angleInd = ind
+#             angleOff_min = math.fabs(result)
+#
+#     # print("Angle Ind and AngleOff",angleInd,angleOff_min)
+#     return angleInd
 
 
 # def updateHumanList(data):
@@ -469,47 +471,52 @@ def ind_angle_matched(laserFrame, b_angle):
 #             # print(marks)
 
 def make_PC_from_Laser(laser_in):
-    # point_cloud_out = PointCloud()
-    # projection = lp.LaserProjection()
-    #
-    # cloud = projection.projectLaser(laser_in)#,channel_options = 0x04)
-    # cloud = pc.read_points(cloud,field_names=("x","y","z"))#,"distances"))
-    # cloud = list(cloud)
-    # # print("Point from Projection")
-    # # print(cloud[0])
-    #
-    # point_cloud_out.header = copy.deepcopy(laser_in.header)
-    # point_cloud_out.channels.append(ChannelFloat32())
-    # point_cloud_out.channels[0].name = "intensity"
-    #
-    # for a in cloud:
-    #     point_cloud_out.points.append(Point(a[0],a[1],a[2]))
-    #     point_cloud_out.channels[0].values.append(.99)
+    # Initialize a point cloud object
+    point_cloud_out = PointCloud()
 
-    updateLaser(laser_in)
-    cloud = []
-    for x in range(len(laser_in.ranges)):
-        if laser_in.ranges[x] >= laserSettings["range_max"] or laser_in.ranges[x] <= laserSettings["range_min"]:
-            cloud.append((laserSettings["range_max"] * math.cos(
-                laserSettings["angle_min"] + x * laserSettings["angle_increment"]),
-                          laserSettings["range_max"] * math.sin(
-                              laserSettings["angle_min"] + x * laserSettings["angle_increment"]), 0))
-        else:
-            cloud.append((laser_in.ranges[x] * math.cos(
-                laserSettings["angle_min"] + x * laserSettings["angle_increment"]), laser_in.ranges[x] * math.sin(
-                laserSettings["angle_min"] + x * laserSettings["angle_increment"]), 0))
+    # Converts the message from a LaserScan to a Point Cloud
+    projection = lp.LaserProjection()
+    cloud = projection.projectLaser(laser_in)  # ,channel_options = 0x04)
 
-    return cloud
+    # Convert it to individual points
+    cloud = pc.read_points(cloud, field_names=("x", "y", "z"))  # ,"distances"))
+    cloud = list(cloud)
+
+    point_cloud_out.header = copy.deepcopy(laser_in.header)
+    point_cloud_out.channels.append(ChannelFloat32())
+    point_cloud_out.channels[0].name = "intensity"
+
+    # Format each Point Cloud into a x,y,z coordinates
+    for a in cloud:
+        point_cloud_out.points.append(Point(a[0], a[1], a[2]))
+        point_cloud_out.channels[0].values.append(.99)
+
+    # Returns the formatted point cloud
+    return point_cloud_out
+
+    # updateLaser(laser_in)
+    # cloud = []
+    # for x in range(len(laser_in.ranges)):
+    #     if laser_in.ranges[x] >= laserSettings["range_max"] or laser_in.ranges[x] <= laserSettings["range_min"]:
+    #         cloud.append((laserSettings["range_max"] * math.cos(
+    #             laserSettings["angle_min"] + x * laserSettings["angle_increment"]),
+    #                       laserSettings["range_max"] * math.sin(
+    #                           laserSettings["angle_min"] + x * laserSettings["angle_increment"]), 0))
+    #     else:
+    #         cloud.append((laser_in.ranges[x] * math.cos(
+    #             laserSettings["angle_min"] + x * laserSettings["angle_increment"]), laser_in.ranges[x] * math.sin(
+    #             laserSettings["angle_min"] + x * laserSettings["angle_increment"]), 0))
+
     # return cloud
 
 
 def updateLaser(data):
-    global laserinput, lastLaser, pc_li
+    global lastLaser, pc_li
 
     lastLaser = copy.deepcopy(data)
 
-    laserinput.append(copy.deepcopy(data))
     # print("updateLaser")
+
     if "angle_increment" not in laserSettings:
         laserSettings["angle_min"] = data.angle_min
         laserSettings["angle_max"] = data.angle_max
@@ -519,8 +526,8 @@ def updateLaser(data):
         laserSettings["range_max"] = data.range_max
         # build_bg(data)
 
-    # # Convert the inputted LaserScan into a Point Cloud
-    # pc_li = make_PC_from_Laser(data)
+    # Convert the inputted LaserScan into a Point Cloud
+    pc_li = make_PC_from_Laser(data)
 
 
 # def build_bg(laser_scan_in):
@@ -550,6 +557,10 @@ def showAnkleMarkers():
     circleMarks = rospy.Publisher("/possible_circles", MarkerArray, queue_size=10)
     bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
+
+    rate = rospy.Rate(10.0)
+    # Set the frame for Point Cloud in Rviz
+    pc_li.header.frame_id = "bg_cloud"
 
     while not rospy.is_shutdown():
 
@@ -584,7 +595,7 @@ def showAnkleMarkers():
             updateLaser(lastLaser)
 
             # convert the new laser scan into a point cloud
-            pcloud = make_PC_from_Laser(lastLaser)
+            # pcloud = make_PC_from_Laser(lastLaser)
 
             # possible laser point clusters that could make up a circle
             clusters = []
@@ -592,69 +603,65 @@ def showAnkleMarkers():
             # init the angle index being checked (start at 0)
             center_index = 0
 
-
             # Updating the centers for each group to find the correct center of the circle using gradient descent
             id = 0  # separate id used for each marker in the marker array
 
             midPointArr1 = []
-
+            # print(pc_li)
             # loop through all the possible indexes
-            while center_index < len(lastLaser.ranges):
+            while center_index < len(pc_li.points):
 
                 # list of indexes making up the cluster
                 ind_list = []
 
                 # finding where to start the cluster (if the point cloud is not inf)
-                if not math.isinf(lastLaser.ranges[center_index]):
-                    # obtaining the list of indexes making up the cluster and the possible center of the circle
-                    ind_list, midrange, midPointArr1 = getCluster(lastLaser, center_index, len(
-                        lastLaser.ranges))  # search to the whole scan until the shape is gone
+                # if not math.isinf(lastLaser.ranges[center_index]):
+                # obtaining the list of indexes making up the cluster and the possible center of the circle
+                ind_list, midrange, midPointArr1 = getCluster(lastLaser, center_index, len(
+                    pc_li.points))  # search to the whole scan until the shape is gone
 
-                    # points needed to be considered a circle threshold
-                    if len(ind_list) > circle_threshold:
-                        # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
-                        clusters.append((midrange, ind_list))
+                # points needed to be considered a circle threshold
+                if len(ind_list) > circle_threshold:
+                    # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
+                    clusters.append((midrange, ind_list))
 
-                        # checking where the midpoints are for each possible circle
-                        for mp in midPointArr1:
-                            # add a new marker to the marker array
-                            testMarks.markers.append(Marker())
+                    # FOR TESTING
+                    # checking where the midpoints are for each possible circle
+                    for mp in midPointArr1:
+                        # add a new marker to the marker array
+                        testMarks.markers.append(Marker())
 
-                            # keep the marker ids unique
-                            testMarks.markers[-1].id = id
+                        # keep the marker ids unique
+                        testMarks.markers[-1].id = id
 
-                            # determining how long the markers will stay up in Rviz
-                            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+                        # determining how long the markers will stay up in Rviz
+                        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
-                            # find the tf of the laser to the parent map
-                            # this tf will be used to translate the circles to match the laser's map
-                            try:
-                                (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
-                            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                                continue
+                        # find the tf of the laser to the parent map
+                        # this tf will be used to translate the circles to match the laser's map
+                        try:
+                            (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
+                        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                            continue
 
-                            # postioning will be relative to the tf of the laser
-                            testMarks.markers[-1].pose = Pose(
-                                # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                                Point(mp[0], mp[1], 0),
-                                Quaternion(0, 0, 0, 1))
-                            testMarks.markers[-1].type = Marker.SPHERE
-                            testMarks.markers[-1].scale = Vector3(.005, .005, .01)
-                            testMarks.markers[-1].action = 0
-                            testMarks.markers[-1].color = ColorRGBA(.9, .9, .6, 1)
-                            testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-                            testMarks.markers[-1].ns = "circles"
-                            id += 1  # keep the ids unique
+                        # postioning will be relative to the tf of the laser
+                        testMarks.markers[-1].pose = Pose(
+                            # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                            Point(mp[0], mp[1], 0),
+                            Quaternion(0, 0, 0, 1))
+                        testMarks.markers[-1].type = Marker.SPHERE
+                        testMarks.markers[-1].scale = Vector3(.005, .005, .01)
+                        testMarks.markers[-1].action = 0
+                        testMarks.markers[-1].color = ColorRGBA(.9, .9, .6, 1)
+                        testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                        testMarks.markers[-1].ns = "circles"
+                        id += 1  # keep the ids unique
 
-
-                    # iterate to the next laser point available
-                    center_index += len(ind_list) + 1
-                else:  # if the certain index at this angle is inf, don't bother running through the algorithm
-                    # iterate to the next laser point available
-                    center_index += 1
-
-
-
+                # iterate to the next laser point available
+                center_index += len(ind_list) + 1
+                # else:  # if the certain index at this angle is inf, don't bother running through the algorithm
+                # iterate to the next laser point available
+                # center_index += 1
 
             # iterate through each cluster
             for g in clusters:
@@ -668,7 +675,7 @@ def showAnkleMarkers():
                 # possible error: do the indexes of the laser scan and the point cloud match?
                 for i in range(g[1][0], g[1][-1]):
                     # add the x,y,z rectangular point into the array for use in update_center
-                    point_for_update.append(pcloud[i])
+                    point_for_update.append(convert_point(pc_li.points[i]))
                 # print(point_for_update)
 
                 # updated center with the given points in this cluster
@@ -705,8 +712,12 @@ def showAnkleMarkers():
 
             # publish the marker array to be displayed on Rviz
             circleMarks.publish(testMarks)
+            # Publish the Point Cloud data
+            # print(pc_li)
+            bg_pub.publish(pc_li)
+            rospy.spin()
 
-            print("****************************************************************************88")
+            print("****************************************************************************")
 
             # print("updated" + str(updated_center))
 
@@ -768,8 +779,6 @@ def showAnkleMarkers():
             # # testMarks.markers[-1].frame_locked = True
             # testMarks.markers[-1].ns = "circles"
             # circleMarks.publish(testMarks)
-
-            # rospy.spin()
 
 
 if __name__ == '__main__':
