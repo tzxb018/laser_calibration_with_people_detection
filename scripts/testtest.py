@@ -66,8 +66,8 @@ def ind_angle(b_angle):
 # returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
 # important to note that this center will change with gradient descent in another function (not the true center)
 def getCluster(laserScan, beginInd, endInd):
-    print("get cluster starts")
-    print(len(pc_li.points))
+    # print("get cluster starts")
+    # print(len(pc_li.points))
     # print("before adjust",beginInd,endInd)
     # cmake sure endInd is after beginInd
     stopInd = endInd
@@ -85,8 +85,8 @@ def getCluster(laserScan, beginInd, endInd):
     if stopInd > len(pc_li.points) - 1:
         stopInd = len(pc_li.points) - 1
 
-    print("New Cluster")
-    print(startInd,stopInd)
+    # print("New Cluster")
+    # print(startInd,stopInd)
 
     # converting laser scan into point cloud
     # pc_temp = make_PC_from_Laser(laserScan)
@@ -124,8 +124,8 @@ def getCluster(laserScan, beginInd, endInd):
             list_inds.append(cind)
             # print("midpoint" + str(midPoint))
 
-    print("returns get cluster")
-    print(len(pc_li.points))
+    # print("returns get cluster")
+    # print(len(pc_li.points))
 
     # return the list of indexes in the group and the purposed midpoint of the possible circle (will be changed later with gradient descent)
     return list_inds, midPoint, midPointArr
@@ -174,12 +174,14 @@ def update_center(points):
     print("start update center")
     print(len(pc_li.points))
 
-    global center, r
+    global center, r, isFinshed
+
+    isFinshed = False
 
     if len(points) > 0:
         new_center = center
         gradient = (1, 1)
-        while dist_from_center((0, 0), gradient) > error:
+        while dist_from_center((0, 0), gradient) > 0.0001:
             gradient = (0, 0)
             for pt in points:
                 r_prime = dist_from_center(pt, new_center)
@@ -194,8 +196,10 @@ def update_center(points):
         print("end update center")
         print(len(pc_li.points))
 
+        isFinshed = True
         return new_center
     else:
+        isFinshed = True
         return
 
 
@@ -531,7 +535,7 @@ def make_PC_from_Laser(laser_in):
 
 
 def updateLaser(data):
-    global lastLaser, pc_li
+    global lastLaser, pc_li, isFinshed
     print("IS FINISEDH?" + str(isFinshed))
     if isFinshed:
         print("START UPDATE LASER " + str(len(pc_li.points)))
@@ -575,7 +579,7 @@ def updateLaser(data):
 def showAnkleMarkers():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
-    global laserList, laserSettings
+    global laserList, laserSettings, isFinshed
 
     print("start")
 
@@ -748,71 +752,6 @@ def showAnkleMarkers():
             bg_pub.publish(pc_li)
             isFinshed = True
             print("****************************************************************************")
-
-
-
-
-            # print("updated" + str(updated_center))
-
-            # rate = rospy.Rate(1)
-            # circleMarker = Marker()
-            # circleMarker.header.frame_id = "/map"
-            # circleMarker.header.stamp = rospy.get_rostime()
-            # circleMarker.ns = "circles"
-            # circleMarker.id = 0
-            # circleMarker.type = Marker.SPHERE
-            # circleMarker.action = 0
-            # circleMarker.pose.position.x = updated_center[0]
-            # circleMarker.pose.position.y = updated_center[1]
-            # circleMarker.pose.position.z = 0
-            # circleMarker.pose.orientation.x = 0
-            # circleMarker.pose.orientation.y = 0
-            # circleMarker.pose.orientation.z = 0.0
-            # circleMarker.pose.orientation.w = 1.0
-            # circleMarker.color = ColorRGBA(.3, .5, .6, .1)
-            # circleMarker.lifetime = rospy.Duration(10)
-            # circleMarks.publish(circleMarker)
-
-            # rospy.spin()
-
-
-            # # print(groups)
-            #
-            # # print(ind_list,len(lastLaser.ranges),len(pcloud))
-            # personPoints = []
-            # # print(len(pcloud))
-            # for pt_in_cloud in ind_list:
-            #     personPoints.append(pcloud[pt_in_cloud])
-            # # testMarks.markers.append(Marker())
-            # # testMarks.markers[-1].id = pt_in_cloud
-            # # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-            # # testMarks.markers[-1].type = Marker.CUBE
-            # # testMarks.markers[-1].scale = Vector3(.05,.05,.05)
-            # # testMarks.markers[-1].action = 0
-            # # testMarks.markers[-1].color = ColorRGBA(.5,.5,1,1)
-            # # testMarks.markers[-1].header = Header(frame_id = "base")
-            # # # testMarks.markers[-1].frame_locked = True
-            # # testMarks.markers[-1].ns = "circle_points"
-            # # print(personPoints)
-            #
-            # center = update_center(personPoints)
-            # print(center)
-            # # center_index = ind_angle(math.atan2(center[1], center[0]))
-            # print("center index %d"%(center_index))
-            # ind_list = []
-            # testMarks.markers.append(Marker())
-            # testMarks.markers[-1].id = 0
-            # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-            # testMarks.markers[-1].pose = Pose(Point(center[0], center[1], -.2), Quaternion(0, 0, 0, 1))
-            # testMarks.markers[-1].type = Marker.SPHERE
-            # testMarks.markers[-1].scale = Vector3(r, r, .01)
-            # testMarks.markers[-1].action = 0
-            # testMarks.markers[-1].color = ColorRGBA(.3, .5, .6, 1)
-            # testMarks.markers[-1].header = Header(frame_id="map")
-            # # testMarks.markers[-1].frame_locked = True
-            # testMarks.markers[-1].ns = "circles"
-            # circleMarks.publish(testMarks)
-
 
 if __name__ == '__main__':
     showAnkleMarkers()
