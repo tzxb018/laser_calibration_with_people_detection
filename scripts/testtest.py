@@ -27,13 +27,13 @@ cameraOutSize = (1280, 720)
 camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
-show_time = .2
+show_time = 0
 ind_list = []
 r = .145
 center = (0, 0)
 center_index = 0
 center_angle = 0
-rate = 1
+rate = .05
 error = 0.001
 circle_threshold = 15
 center_points = []  # stores the centers of each detected circle
@@ -46,6 +46,7 @@ rAnkle = (0, 0)
 pc_li = PointCloud()
 pc_display = PointCloud()
 isFinshed = True
+rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in range(0,200)]
 
 
 def ind_angle(b_angle):
@@ -97,7 +98,7 @@ def getCluster(laserScan, beginInd, endInd):
         test_midpoint = (
             (ckind * test_midpoint[0] + testPoint[0]) / (ckind + 1), (ckind * test_midpoint[1] + testPoint[1]) / (ckind + 1),
             (ckind * test_midpoint[2] + testPoint[2]) / (ckind + 1))
-        midPointArr.append(test_midpoint)
+
 
         # extend the group to the next point if the tested point is within the length of the radius to the midpoint
         # previous point is within a promxity to the next point
@@ -107,6 +108,7 @@ def getCluster(laserScan, beginInd, endInd):
         # dist_from_center(testPoint, test_midpoint) < r and
         if dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
             midpoint = test_midpoint
+            midPointArr.append(test_midpoint)
             list_inds.append(cind)
 
         # if the distance between the tested point and the middle is bigger than the radius (plus error) then the group ends
@@ -143,6 +145,8 @@ def update_center(points):
         new_center = center
         grad_center_arr.append(new_center)
         gradient = (1, 1)
+
+        print(points)
         while dist_from_center((0, 0), gradient) > 0.001:
             gradient = (0, 0)
             for pt in points:
@@ -157,7 +161,7 @@ def update_center(points):
         # print("end update center")
         # print(len(pc_li))
         isFinshed = True
-
+        print(new_center)
         return new_center, grad_center_arr
     else:
         isFinshed = True
@@ -226,7 +230,7 @@ def updateLaser(data):
 def showCircles():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
-    global laserList, laserSettings, isFinshed, center_points, pc_li
+    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color
 
     # print("start")
 
@@ -241,6 +245,7 @@ def showCircles():
 
     # Set the frame for Point Cloud in Rviz
     pc_li.header.frame_id = "bg_cloud"
+
 
     while not rospy.is_shutdown():
 
@@ -268,11 +273,15 @@ def showCircles():
             midPointArr1 = []
             grad_center_arr1 = []
 
+            group_index = 0
+
             # loop through all the possible indexes
             while center_index < len(pc_li):
 
                 # list of indexes making up the cluster
                 ind_list = []
+
+
 
                 # finding where to start the cluster (if the point cloud is not inf)
                 # if not math.isinf(lastLaser.ranges[center_index]):
@@ -284,8 +293,13 @@ def showCircles():
                 if len(ind_list) > circle_threshold:
 
                     # FOR TESTING: Marking each cluster with a different color
-                    rand_color = ColorRGBA(random.uniform(0,1), random.uniform(0,1), random.uniform(0,1), random.uniform(0,1))
+                    # rand_color = (random.randint(0,254)/255.0, random.randint(0,254)/255.0, random.randint(0,254)/255.0)
+                    #random.uniform(0,1), random.uniform(0,1), random.uniform(0,1), 1)
+                    # print(rand_color)
                     for ind in ind_list:
+
+                        rgba = ColorRGBA(.23, .62, .67, 1)
+
                         # add a new marker to the marker array
                         testMarks.markers.append(Marker())
 
@@ -311,7 +325,7 @@ def showCircles():
                         testMarks.markers[-1].type = Marker.SPHERE
                         testMarks.markers[-1].scale = Vector3(.03, .03, .03)
                         testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(.23,.62,.67,1)
+                        testMarks.markers[-1].color = ColorRGBA(rand_color[group_index % 200][0], rand_color[group_index % 200][1], rand_color[group_index % 200][2] ,1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                         testMarks.markers[-1].ns = "clusters"
                         id += 1  # keep the ids unique
@@ -319,6 +333,9 @@ def showCircles():
 
                     # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
                     clusters.append((midrange, ind_list))
+
+                    print("midpoints")
+                    print(midPointArr1)
 
                     # print(clusters[-1])
                     # FOR TESTING
@@ -357,21 +374,43 @@ def showCircles():
                         id += 1  # keep the ids unique
 
                     # FOR TESTING: marking the last midpoint
+                    testMarks.markers.append(Marker())
+                    testMarks.markers[-1].id = id
+
                     testMarks.markers[-1].pose = Pose(
                         # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
                         Point(midPointArr1[-1][0], midPointArr1[-1][1], 0),
                         Quaternion(0, 0, 0, 1))
+                    testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
                     testMarks.markers[-1].type = Marker.SPHERE
                     testMarks.markers[-1].scale = Vector3(.01, .01, .01)
                     testMarks.markers[-1].action = 0
-                    testMarks.markers[-1].color = ColorRGBA(0, .2, 0, 1)
+                    testMarks.markers[-1].color = ColorRGBA(0, .9 , .5, 1)
                     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                     testMarks.markers[-1].ns = "last_midpoint"
                     id += 1  # keep the ids unique
 
+                    # testMarks.markers.append(Marker())
+                    # testMarks.markers[-1].id = id
+                    #
+                    # testMarks.markers[-1].pose = Pose(
+                    #     # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                    #     Point(1, 1, 0),
+                    #     Quaternion(0, 0, 0, 1))
+                    # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+                    #
+                    # testMarks.markers[-1].type = Marker.SPHERE
+                    # testMarks.markers[-1].scale = Vector3(1, 1, 0)
+                    # testMarks.markers[-1].action = 0
+                    # testMarks.markers[-1].color = ColorRGBA(0, .9 , .5, .5)
+                    # testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                    # testMarks.markers[-1].ns = "random"
+                    # id += 1
+
                     point_for_update = []
 
-                    for i in range(ind_list[0], ind_list[-1]):
+                    for i in ind_list:
 
                         # add the x,y,z rectangular point into the array for use in update_center
                         point_for_update.append((pc_li[i]))
@@ -413,8 +452,9 @@ def showCircles():
                             # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
                             Point(updated_center[0], updated_center[1], 0),
                             Quaternion(0, 0, 0, 1))
+
                         testMarks.markers[-1].type = Marker.SPHERE
-                        testMarks.markers[-1].scale = Vector3(r, r, .01)
+                        testMarks.markers[-1].scale = Vector3(2* r, 2 * r, .01)
                         testMarks.markers[-1].action = 0
                         testMarks.markers[-1].color = ColorRGBA(.3, .8, .6, 1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
@@ -446,6 +486,8 @@ def showCircles():
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                             testMarks.markers[-1].ns = "grad_descent"
                             id += 1  # keep the ids unique
+
+                group_index += 1
 
                 # iterate to the next laser point available
                 center_index += len(ind_list) + 1
