@@ -27,13 +27,13 @@ cameraOutSize = (1280, 720)
 camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
-show_time = 0
+show_time = 1
 ind_list = []
-r = .145
+r = .14
 center = (0, 0)
 center_index = 0
 center_angle = 0
-rate = .05
+rate = .2
 error = 0.001
 circle_threshold = 15
 center_points = []  # stores the centers of each detected circle
@@ -105,8 +105,8 @@ def getCluster(laserScan, beginInd, endInd):
 
         proximity = .039 # arc = 2 * max_range (10) * sin ( angle/2)
 
-        # dist_from_center(testPoint, test_midpoint) < r and
-        if dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
+        #
+        if dist_from_center(testPoint, test_midpoint) < r and dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
             midpoint = test_midpoint
             midPointArr.append(test_midpoint)
             list_inds.append(cind)
@@ -146,7 +146,7 @@ def update_center(points):
         grad_center_arr.append(new_center)
         gradient = (1, 1)
 
-        print(points)
+        # print(points)
         while dist_from_center((0, 0), gradient) > 0.001:
             gradient = (0, 0)
             for pt in points:
@@ -161,7 +161,7 @@ def update_center(points):
         # print("end update center")
         # print(len(pc_li))
         isFinshed = True
-        print(new_center)
+        # print(new_center)
         return new_center, grad_center_arr
     else:
         isFinshed = True
@@ -334,8 +334,8 @@ def showCircles():
                     # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
                     clusters.append((midrange, ind_list))
 
-                    print("midpoints")
-                    print(midPointArr1)
+                    # print("midpoints")
+                    # print(midPointArr1)
 
                     # print(clusters[-1])
                     # FOR TESTING
@@ -514,16 +514,16 @@ def triangle_finder():
     global center_points
 
     # measurements of physical triangle (calibration target)
-    leg_a = .3
-    leg_b = .4
-    leg_c = .5
+    leg_a = .48
+    leg_b = .62
+    leg_c = .78
     angle_a = math.tan(leg_a / leg_b)
     angle_b = math.tan(leg_b / leg_a)
     angle_c = math.pi / 2
-    margin = .01
+    margin = .02
 
     # for testing
-    center_points = [(0, 0), (0.3, 0), (0, 0.4), (.4, .3)]
+    # center_points = [(0, 0), (0.3, 0), (0, 0.4), (.4, .3)]
 
     len_measurment_arr = []
     possible_legs_matrix = [[0 for x in range(len(center_points))] for y in range(len(center_points))]
