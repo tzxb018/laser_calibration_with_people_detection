@@ -633,60 +633,60 @@ def triangle_finder():
     testMarks = MarkerArray()
     id = 0
 
-    for leg_points in possible_legs_a:
-        # add a new marker to the marker array
-        testMarks.markers.append(Marker())
-
-        # keep the marker ids unique
-        testMarks.markers[-1].id = id
-
-        # determining how long the markers will stay up in Rviz
-        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-        testMarks.markers[-1].type = Marker.LINE_STRIP
-        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
-        testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(0,0,1,1)
-        testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
-        testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-        testMarks.markers[-1].ns = "legs_a"
-        id += 1  # keep the ids unique
-
-    for leg_points in possible_legs_b:
-        # add a new marker to the marker array
-        testMarks.markers.append(Marker())
-
-        # keep the marker ids unique
-        testMarks.markers[-1].id = id
-
-        # determining how long the markers will stay up in Rviz
-        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-        testMarks.markers[-1].type = Marker.LINE_STRIP
-        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
-        testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(0,.9,.4,1)
-        testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
-        testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-        testMarks.markers[-1].ns = "legs_b"
-        id += 1  # keep the ids unique
-
-    for leg_points in possible_legs_c:
-        # add a new marker to the marker array
-        testMarks.markers.append(Marker())
-
-        # keep the marker ids unique
-        testMarks.markers[-1].id = id
-
-        # determining how long the markers will stay up in Rviz
-        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-        testMarks.markers[-1].type = Marker.LINE_STRIP
-        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
-        testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(.2, .8, .9, 1)
-        testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0),
-                                        Point(leg_points[1][0], leg_points[1][1], 0)]
-        testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-        testMarks.markers[-1].ns = "legs_c"
-        id += 1  # keep the ids unique
+    # for leg_points in possible_legs_a:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(0,0,1,1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_a"
+    #     id += 1  # keep the ids unique
+    #
+    # for leg_points in possible_legs_b:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(0,.9,.4,1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_b"
+    #     id += 1  # keep the ids unique
+    #
+    # for leg_points in possible_legs_c:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(.2, .8, .9, 1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0),
+    #                                     Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_c"
+    #     id += 1  # keep the ids unique
 
 
     print(len(possible_legs_a))
@@ -737,6 +737,7 @@ def triangle_finder():
                         continue
 
                     print("has target")
+                    possible_triangle.append([a,b,c])
 
                     # a_dist = dist_from_center(a[0], a[1])
                     # b_dist = dist_from_center(b[0], b[1])
