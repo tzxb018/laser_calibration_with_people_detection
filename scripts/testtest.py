@@ -2,6 +2,7 @@
 import rospy
 import math
 import copy
+import sys
 # from rtree import index
 import matplotlib.pyplot as pp
 import tf
@@ -29,13 +30,13 @@ tfDist_cam_laser = 0.0
 tfWait = 3
 show_time = 1
 ind_list = []
-r = .14
+r = float(sys.argv[4])
 center = (0, 0)
 center_index = 0
 center_angle = 0
 rate = .2
 error = 0.001
-circle_threshold = 15
+circle_threshold = 10
 center_points = []  # stores the centers of each detected circle
 laserSettings = {}
 max_range = 25.0
@@ -101,12 +102,12 @@ def getCluster(laserScan, beginInd, endInd):
 
 
         # extend the group to the next point if the tested point is within the length of the radius to the midpoint
-        # previous point is within a promxity to the next point
+        # previous point is within a close promxity to the next point
 
         proximity = .039 # arc = 2 * max_range (10) * sin ( angle/2)
 
         #
-        if dist_from_center(testPoint, test_midpoint) < r and dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
+        if dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
             midpoint = test_midpoint
             midPointArr.append(test_midpoint)
             list_inds.append(cind)
@@ -197,8 +198,8 @@ def make_PC_from_Laser_display(laser_in):
     pc_out.channels.append(ChannelFloat32())
     pc_out.channels[0].name = "intensity"
     # Format each Point Cloud into a x,y,z coordinates
-    for a in cloud:
-        pc_out.points.append(Point(a[0], a[1], a[2]))
+    for cc in cloud:
+        pc_out.points.append(Point(cc[0], cc[1], cc[2]))
         pc_out.channels[0].values.append(.99)
     # print("end make pc from laser")
     # print(len(pc_li))
@@ -259,6 +260,7 @@ def showCircles():
             updateLaser(lastLaser)
 
             isFinshed = False
+            center_points = []
             # convert the new laser scan into a point cloud
             # pcloud = make_PC_from_Laser(lastLaser)
 
@@ -280,7 +282,6 @@ def showCircles():
 
                 # list of indexes making up the cluster
                 ind_list = []
-
 
 
                 # finding where to start the cluster (if the point cloud is not inf)
@@ -368,7 +369,7 @@ def showCircles():
                         testMarks.markers[-1].type = Marker.SPHERE
                         testMarks.markers[-1].scale = Vector3(.005, .005, .01)
                         testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(.9, .9, .6, 1)
+                        testMarks.markers[-1].color = ColorRGBA(.2, .9, .9, 1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                         testMarks.markers[-1].ns = "midpoints"
                         id += 1  # keep the ids unique
@@ -422,48 +423,86 @@ def showCircles():
                     # updated center with the given points in this cluster
                     updated_center, grad_center_arr1 = update_center(point_for_update)
 
-                    temp_r = dist_from_center(point_for_update[0], updated_center)
+                    within_circle = True
+                    within_margin = .03
+                    for i in ind_list:
+                        if not (r - within_margin <= dist_from_center(pc_li[i], updated_center) <= r + within_margin):
+                            within_circle = False
 
-                    # print(str(updated_center) + " " + str(dist_from_center(point_for_update[0], updated_center)))
-                    if dist_from_center(point_for_update[0], updated_center) < r + .025 and dist_from_center(
-                            point_for_update[0], updated_center) > r - .025:
+                    # FOR TESTING: drawing the margin circles
 
-                        # add the updated center to a list of circles (used later on in triangle_finder)
-                        center_points.append(updated_center)
+                    # add a new marker to the marker array
+                    testMarks.markers.append(Marker())
 
-                        # add a new marker to the marker array
-                        testMarks.markers.append(Marker())
+                    # keep the marker ids unique
+                    testMarks.markers[-1].id = id
 
-                        # keep the marker ids unique
-                        testMarks.markers[-1].id = id
+                    # determining how long the markers will stay up in Rviz
+                    testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
-                        # determining how long the markers will stay up in Rviz
-                        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+                    # find the tf of the laser to the parent map
+                    # this tf will be used to translate the circles to match the laser's map
+                    # try:
+                    #     (trans, rot) = tf_listen.lookupTransform('/laser_hog', '/map', rospy.Time(0))
+                    # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                    #     continue
 
-                        # find the tf of the laser to the parent map
-                        # this tf will be used to translate the circles to match the laser's map
-                        # try:
-                        #     (trans, rot) = tf_listen.lookupTransform('/laser_hog', '/map', rospy.Time(0))
-                        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                        #     continue
+                    # postioning will be relative to the tf of the laser
+                    testMarks.markers[-1].pose = Pose(
+                        # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                        Point(updated_center[0], updated_center[1], 0),
+                        Quaternion(0, 0, 0, 1))
 
-                        # postioning will be relative to the tf of the laser
-                        testMarks.markers[-1].pose = Pose(
-                            # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                            Point(updated_center[0], updated_center[1], 0),
-                            Quaternion(0, 0, 0, 1))
+                    testMarks.markers[-1].type = Marker.SPHERE
+                    testMarks.markers[-1].scale = Vector3(2 * r + within_margin, 2 * r + within_margin, .01)
+                    testMarks.markers[-1].action = 0
+                    testMarks.markers[-1].color = ColorRGBA(.0, .9, .0, .1)
+                    testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                    testMarks.markers[-1].ns = "margin"
+                    id += 1  # keep the ids unique
 
-                        testMarks.markers[-1].type = Marker.SPHERE
-                        testMarks.markers[-1].scale = Vector3(2* r, 2 * r, .01)
-                        testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(.3, .8, .6, 1)
-                        testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-                        testMarks.markers[-1].ns = "circles"
-                        id += 1  # keep the ids unique
+                    # add a new marker to the marker array
+                    testMarks.markers.append(Marker())
 
-                        # FOR TESTING
-                        # Display the grad descent process
-                        for pt in grad_center_arr1:
+                    # keep the marker ids unique
+                    testMarks.markers[-1].id = id
+
+                    # determining how long the markers will stay up in Rviz
+                    testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+                    # find the tf of the laser to the parent map
+                    # this tf will be used to translate the circles to match the laser's map
+                    # try:
+                    #     (trans, rot) = tf_listen.lookupTransform('/laser_hog', '/map', rospy.Time(0))
+                    # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                    #     continue
+
+                    # postioning will be relative to the tf of the laser
+                    testMarks.markers[-1].pose = Pose(
+                        # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                        Point(updated_center[0], updated_center[1], 0),
+                        Quaternion(0, 0, 0, 1))
+
+                    testMarks.markers[-1].type = Marker.SPHERE
+                    testMarks.markers[-1].scale = Vector3(2 * r - within_margin, 2 * r - within_margin, .01)
+                    testMarks.markers[-1].action = 0
+                    testMarks.markers[-1].color = ColorRGBA(.0, .9, .0, .1)
+                    testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                    testMarks.markers[-1].ns = "margin"
+                    id += 1  # keep the ids unique
+
+                    if within_circle:
+                        # temp_r = dist_from_center(point_for_update[0], updated_center)
+
+                        # print(str(updated_center) + " " + str(dist_from_center(point_for_update[0], updated_center)))
+
+                        # set a minimum range away from the laser to detect circles
+                        # this will remove alot of the false positives we are getting that are close to the laser
+                        # (assume that targets are not within 1 meter)
+                        if dist_from_center((0,0), updated_center) >= 1.0:
+
+                            # add the updated center to a list of circles (used later on in triangle_finder)
+                            center_points.append(updated_center + (id,))
 
                             # add a new marker to the marker array
                             testMarks.markers.append(Marker())
@@ -474,18 +513,52 @@ def showCircles():
                             # determining how long the markers will stay up in Rviz
                             testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
+                            # find the tf of the laser to the parent map
+                            # this tf will be used to translate the circles to match the laser's map
+                            # try:
+                            #     (trans, rot) = tf_listen.lookupTransform('/laser_hog', '/map', rospy.Time(0))
+                            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                            #     continue
+
                             # postioning will be relative to the tf of the laser
                             testMarks.markers[-1].pose = Pose(
                                 # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                                Point(pt[0], pt[1], 0),
+                                Point(updated_center[0], updated_center[1], 0),
                                 Quaternion(0, 0, 0, 1))
+
                             testMarks.markers[-1].type = Marker.SPHERE
-                            testMarks.markers[-1].scale = Vector3(.005, .005, .01)
+                            testMarks.markers[-1].scale = Vector3(2* r, 2 * r, .01)
                             testMarks.markers[-1].action = 0
-                            testMarks.markers[-1].color = ColorRGBA(.1, .2, .1, 1)
+                            testMarks.markers[-1].color = ColorRGBA(.0, .8, .27, .1)
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-                            testMarks.markers[-1].ns = "grad_descent"
+                            testMarks.markers[-1].ns = "circles"
                             id += 1  # keep the ids unique
+
+                            # FOR TESTING
+                            # Display the grad descent process
+                            for pt in grad_center_arr1:
+
+                                # add a new marker to the marker array
+                                testMarks.markers.append(Marker())
+
+                                # keep the marker ids unique
+                                testMarks.markers[-1].id = id
+
+                                # determining how long the markers will stay up in Rviz
+                                testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+                                # postioning will be relative to the tf of the laser
+                                testMarks.markers[-1].pose = Pose(
+                                    # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                                    Point(pt[0], pt[1], 0),
+                                    Quaternion(0, 0, 0, 1))
+                                testMarks.markers[-1].type = Marker.SPHERE
+                                testMarks.markers[-1].scale = Vector3(.005, .005, .01)
+                                testMarks.markers[-1].action = 0
+                                testMarks.markers[-1].color = ColorRGBA(.8, .6, .6, 1)
+                                testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                                testMarks.markers[-1].ns = "grad_descent"
+                                id += 1  # keep the ids unique
 
                 group_index += 1
 
@@ -503,7 +576,7 @@ def showCircles():
             # print(pc_li)
             bg_pub.publish(pc_display)
 
-            # triangle_finder()
+            triangle_finder()
             isFinshed = True
             print("****************************************************************************")
 
@@ -513,20 +586,28 @@ def showCircles():
 def triangle_finder():
     global center_points
 
+    triangle_marks = rospy.Publisher("/triangles", MarkerArray, queue_size=10)
+
     # measurements of physical triangle (calibration target)
-    leg_a = .48
-    leg_b = .62
-    leg_c = .78
-    angle_a = math.tan(leg_a / leg_b)
-    angle_b = math.tan(leg_b / leg_a)
-    angle_c = math.pi / 2
-    margin = .02
+    # leg c is the hypotenuse
+    leg_a = float(sys.argv[1])
+    leg_b = float(sys.argv[2])
+    leg_c = float(sys.argv[3])
+    angle_a = math.sin(leg_a / leg_c)
+    angle_b = math.sin(leg_b / leg_c)
+    angle_c = math.pi / 2.0
+    margin = .03
 
     # for testing
     # center_points = [(0, 0), (0.3, 0), (0, 0.4), (.4, .3)]
 
     len_measurment_arr = []
+    possible_legs_a = []
+    possible_legs_b = []
+    possible_legs_c = []
+
     possible_legs_matrix = [[0 for x in range(len(center_points))] for y in range(len(center_points))]
+    print(len(center_points))
     for i in range(0, len(center_points)):
         for j in range(i, len(center_points)):
             if i != j:
@@ -537,19 +618,269 @@ def triangle_finder():
                 if leg_a - margin < temp_dist < leg_a + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg a'])
                     possible_legs_matrix[i][j] = 'a'
+                    possible_legs_a.append([center_points[i], center_points[j]])
                 elif leg_b - margin < temp_dist < leg_b + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg b'])
                     possible_legs_matrix[i][j] = 'b'
+                    possible_legs_b.append([center_points[i], center_points[j]])
                 elif leg_c - margin < temp_dist < leg_c + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg c'])
                     possible_legs_matrix[i][j] = 'c'
+                    possible_legs_c.append([center_points[i], center_points[j]])
 
-    # print(possible_legs_matrix)
-    # print(len_measurment_arr)
+    print(possible_legs_matrix)
+    possible_triangle = []
+    testMarks = MarkerArray()
+    id = 0
 
-    # use a matrix algorithm to find the three points that make up the 3-4-5 triangle
+    # for leg_points in possible_legs_a:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(0,0,1,1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_a"
+    #     id += 1  # keep the ids unique
+    #
+    # for leg_points in possible_legs_b:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(0,.9,.4,1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0), Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_b"
+    #     id += 1  # keep the ids unique
+    #
+    # for leg_points in possible_legs_c:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(.2, .8, .9, 1)
+    #     testMarks.markers[-1].points = [Point(leg_points[0][0], leg_points[0][1], 0),
+    #                                     Point(leg_points[1][0], leg_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "legs_c"
+    #     id += 1  # keep the ids unique
 
-    exit()
 
+    print(len(possible_legs_a))
+    print(len(possible_legs_b))
+    print(len(possible_legs_c))
+
+    # find the angle between the lines to determine which could be in the tirangle
+    # efficiency of n^3, probably a way to make this more efficient
+    # if there is a chance to find a triangle (possible if there is at least one leg)
+    angle_range = 5.0 / 180.0 * math.pi
+    diff_from_90 = angle_range
+    final_triangle = [] # returns the most accurate triangle (should be the calibartion target)
+
+    if (len(possible_legs_c) > 0 and len(possible_legs_b) > 0 and len(possible_legs_a) > 0):
+        for a in possible_legs_a:
+            for b in possible_legs_b:
+                for c in possible_legs_c:
+
+                    list_of_centers = []
+                    print(a[0][2])
+                    print(a[1][2])
+                    print('wefwaeaf')
+                    print(b[0][2])
+                    print(b[1][2])
+                    print('3r09jfww')
+                    print(c[0][2])
+                    print(c[1][2])
+
+                    if a[0][2] not in list_of_centers:
+                        list_of_centers.append(a[0][2])
+
+                    if a[1][2] not in list_of_centers:
+                        list_of_centers.append(a[1][2])
+
+                    if b[0][2] not in list_of_centers:
+                        list_of_centers.append(b[0][2])
+
+                    if b[1][2] not in list_of_centers:
+                        list_of_centers.append(b[1][2])
+
+                    if c[0][2] not in list_of_centers:
+                        list_of_centers.append(c[0][2])
+
+                    if c[1][2] not in list_of_centers:
+                        list_of_centers.append(c[1][2])
+
+                    if len(list_of_centers) > 3:
+                        continue
+
+                    print("has target")
+                    possible_triangle.append([a,b,c])
+
+                    # a_dist = dist_from_center(a[0], a[1])
+                    # b_dist = dist_from_center(b[0], b[1])
+                    # c_dist = dist_from_center(c[0], c[1])
+                    # # print(str(a_dist) + " " + str(b_dist) + " " + str(c_dist)))
+                    #
+                    # # finds the gradient of both legs
+                    # grad_a = float((a[0][1] - a[1][1]) / (a[0][0] - a[1][0]))
+                    # grad_b = float((b[0][1] - b[1][1]) / (b[0][0] - b[1][0]))
+                    # grad_c = float((c[0][1] - c[1][1]) / (c[0][0] - c[1][0]))
+                    #
+                    # # finds the angles between each leg using trig
+                    # angle_c_test = math.atan((grad_a - grad_b)/(1 + grad_b*grad_a))
+                    # angle_b_test = math.atan((grad_a - grad_c)/(1 + grad_a*grad_c))
+                    # angle_a_test = math.atan((grad_b - grad_c)/(1 + grad_b*grad_c))
+                    #
+                    # print(a_dist)
+                    # print(b_dist)
+                    # print(c_dist)
+                    # print("angles")
+                    # print(a)
+                    # print(grad_a)
+                    # print(b)
+                    # print(grad_b)
+                    # print(c)
+                    # print(grad_c)
+                    #
+                    # print("looking for...")
+                    # print(str(angle_a) + " " + str(angle_b) + " " + str(angle_c))
+                    # print(str(angle_a_test) + " " + str(angle_b_test) + " " + str(angle_c_test))
+                    # print("margin ..."  + str(angle_range))
+                    # print(math.sin(b_dist / c_dist))
+                    #
+                    # # if the angles between each line are within the angles of the calibration target's triangle,
+                    # # consider it as a possible triangle
+                    # if (angle_a - angle_range < math.sin(a_dist / c_dist) < angle_a + angle_range) and \
+                    #         (angle_b - angle_range < math.sin(b_dist / c_dist) < angle_b + angle_range) and \
+                    #         (angle_a - angle_range < math.tan(a_dist / b_dist) < angle_a + angle_range) and \
+                    #         (angle_b - angle_range < math.tan(b_dist / a_dist) < angle_b + angle_range):
+                    #     possible_triangle.append([a, b, c])
+
+    print(possible_triangle)
+
+    for triangle in possible_triangle:
+        print(triangle)
+        leg_num = 1
+        for line_points in triangle:
+
+            # determines the color of each leg
+            if leg_num == 1:
+                leg_color = ColorRGBA(.3, .7, .6, 1)
+            elif leg_num == 2:
+                leg_color = ColorRGBA(.6, .1, .5, 1)
+            else:
+                leg_color = ColorRGBA(.8, .8, .7, 1)
+
+            leg_num += 1
+
+            # add a new marker to the marker array
+            testMarks.markers.append(Marker())
+
+            # keep the marker ids unique
+            testMarks.markers[-1].id = id
+
+            # determining how long the markers will stay up in Rviz
+            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+            testMarks.markers[-1].type = Marker.LINE_STRIP
+            testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+            testMarks.markers[-1].action = 0
+            testMarks.markers[-1].color = leg_color
+            testMarks.markers[-1].points = [Point(line_points[0][0], line_points[0][1], 0),
+                                            Point(line_points[1][0], line_points[1][1], 0)]
+            testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+            testMarks.markers[-1].ns = "final_triangle"
+            id += 1  # keep the ids unique
+    #
+    # for line_points in final_triangle:
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.LINE_STRIP
+    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(.9, .2, .9, 1)
+    #     testMarks.markers[-1].points = [Point(line_points[0][0], line_points[0][1], 0),
+    #                                     Point(line_points[1][0], line_points[1][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "final_triangle"
+    #     id += 1  # keep the ids unique
+
+    # print(possible_triangle)
+    #
+    # for tri in possible_triangle:
+    #     triangle_points = []
+    #     print("tri")
+    #     print(tri)
+    #     for pt in tri:
+    #         print("pt")
+    #         print(pt)
+    #         for ptp in pt:
+    #             if ptp not in triangle_points:
+    #                 triangle_points.append(ptp)
+    #
+    #     print("triangle")
+    #     print(triangle_points)
+    #     # add a new marker to the marker array
+    #     testMarks.markers.append(Marker())
+    #
+    #     # keep the marker ids unique
+    #     testMarks.markers[-1].id = id
+    #
+    #     # determining how long the markers will stay up in Rviz
+    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #     testMarks.markers[-1].type = Marker.TRIANGLE_LIST
+    #     testMarks.markers[-1].scale = Vector3(1, 1, 1)
+    #     testMarks.markers[-1].action = 0
+    #     testMarks.markers[-1].color = ColorRGBA(.7,.7,.2, 1)
+    #     testMarks.markers[-1].points = [Point(triangle_points[0][0], triangle_points[0][1], 0),
+    #                                     Point(triangle_points[1][0], triangle_points[1][1], 0),
+    #                                     Point(triangle_points[2][0], triangle_points[2][1], 0)]
+    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+    #     testMarks.markers[-1].ns = "triangle"
+    #     id += 1  # keep the ids unique
+
+    triangle_marks.publish(testMarks)
+
+
+    # for i in range(0, len(center_points)):
+    #     for j in range(i, len(center_points)):
+    #         if i != j:
+    #             if possible_legs_matrix[i][j] = 'a':
+    #                 for x in range(i, len(center_points)):
+    #                     if possible_legs_matrix[x][j] = 'b':
+    #                         for y in range(j, len(center_points)):
+    #                             if possible_legs_matrix[x][y] = 'c':
+
+
+
+    # exit()
 if __name__ == '__main__':
     showCircles()
