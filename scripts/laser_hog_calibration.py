@@ -14,6 +14,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
 from std_msgs.msg import Header, ColorRGBA
 import random
+from numpy.linalg import inv
 
 #
 # from openpose_ros_msgs.msg import *
@@ -39,6 +40,7 @@ rate = .2
 error = 0.001
 circle_threshold = 15
 center_points = []  # stores the centers of each detected circle
+possible_triangle = [] # stores the point that make up the calibration target
 laserSettings = {}
 max_range = 25.0
 center_mass_points = (0, 1, 2, 5, 8, 9, 10, 11, 12, 13, 16, 17)
@@ -530,7 +532,7 @@ def showCircles():
 
 # finds the triangle made by three circles
 def triangle_finder():
-    global center_points
+    global center_points, possible_triangle
 
     triangle_marks = rospy.Publisher("/triangles", MarkerArray, queue_size=10)
 
@@ -707,6 +709,36 @@ def triangle_finder():
 
     # Publish triangle
     triangle_marks.publish(testMarks)
+
+    matrix_transformation()
+
+# finding the matrix transformation using the triangle
+def matrix_transformation():
+    global possible_triangle
+
+    for triangle in possible_triangle:
+
+        # find the a and b legs (the perpendicular)
+        line_a = triangle[0]
+        line_b = triangle[1]
+
+        # finding the basis using the legs
+        grad_a_rise = float((line_a[0][1] - line_a[1][1]))
+        grad_a_run = float(line_a[0][0] - line_a[1][0])
+        grad_b_rise = float((line_b[0][1] - line_b[1][1]))
+        grad_b_run = float(line_b[0][0] - line_b[1][0])
+
+        basis = numpy.array([[grad_a_rise,grad_b_rise],[grad_a_run,grad_b_run]])
+
+        print(basis)
+        print(grad_a_rise)
+        print(grad_a_run)
+        print(grad_b_rise)
+        print(grad_b_run)
+
+        change_from_standard_to_this_basis = inv(basis)
+
+        print(change_from_standard_to_this_basis)
 
 
 
