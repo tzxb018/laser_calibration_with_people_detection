@@ -14,6 +14,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
 from std_msgs.msg import Header, ColorRGBA
 import random
+
 #
 # from openpose_ros_msgs.msg import *
 # import bgsubtract as BG
@@ -36,7 +37,7 @@ center_index = 0
 center_angle = 0
 rate = .2
 error = 0.001
-circle_threshold = 10
+circle_threshold = 15
 center_points = []  # stores the centers of each detected circle
 laserSettings = {}
 max_range = 25.0
@@ -47,7 +48,8 @@ rAnkle = (0, 0)
 pc_li = PointCloud()
 pc_display = PointCloud()
 isFinshed = True
-rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in range(0,200)]
+rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
+              range(0, 200)]
 
 
 def ind_angle(b_angle):
@@ -59,17 +61,13 @@ def ind_angle(b_angle):
 # returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
 # important to note that this center will change with gradient descent in another function (not the true center)
 def getCluster(laserScan, beginInd, endInd):
-    # print("get cluster starts")
-    # print(len(pc_li))
-    # print("before adjust",beginInd,endInd)
-    # cmake sure endInd is after beginInd
     stopInd = endInd
     startInd = beginInd
     if stopInd < startInd:
         tmp = stopInd
         stopInd = startInd
         startInd = tmp
-    # print(len(laserScan.ranges))
+
     # make sure range is in bounds
     if startInd < 0:
         startInd = 0
@@ -78,12 +76,13 @@ def getCluster(laserScan, beginInd, endInd):
 
     # list of indexes that are in the cluster
     list_inds = []
+
     # init the midpoint (will be the first point)
     test_midpoint = pc_li[startInd]
-    # startPoint = pc_temp[startInd]
+
     # FOR TESTING
     midPointArr = []
-    midpoint = (0,0,0)
+    midpoint = (0, 0, 0)
 
     # go through the points on the laser scan to see how big the group will get
     for cind in range(startInd + 1, stopInd):
@@ -97,51 +96,40 @@ def getCluster(laserScan, beginInd, endInd):
         # print(midPoint)
 
         test_midpoint = (
-            (ckind * test_midpoint[0] + testPoint[0]) / (ckind + 1), (ckind * test_midpoint[1] + testPoint[1]) / (ckind + 1),
+            (ckind * test_midpoint[0] + testPoint[0]) / (ckind + 1),
+            (ckind * test_midpoint[1] + testPoint[1]) / (ckind + 1),
             (ckind * test_midpoint[2] + testPoint[2]) / (ckind + 1))
 
-
         # extend the group to the next point if the tested point is within the length of the radius to the midpoint
-        # previous point is within a close promxity to the next point
+        # previous point is within a close proximity to the next point
 
-        proximity = .039 # arc = 2 * max_range (10) * sin ( angle/2)
+        proximity = .039  # arc = 2 * max_range (10) * sin ( angle/2)
 
         #
-        if dist_from_center(pc_li[cind-1], pc_li[cind]) <= proximity:
+        if dist_from_center(pc_li[cind - 1], pc_li[cind]) <= proximity:
             midpoint = test_midpoint
             midPointArr.append(test_midpoint)
             list_inds.append(cind)
 
         # if the distance between the tested point and the middle is bigger than the radius (plus error) then the group ends
         else:
-            # print("midpoint" + str(midPoint))
-
             break
-    # print("returns get cluster")
-    # print(len(pc_li))
+
     # return the list of indexes in the group and the purposed midpoint of the possible circle (will be changed later with gradient descent)
     return list_inds, midpoint, midPointArr
-
-#
-# def convert_point(point):  # converts from a Point to a list
-#     p = (point.x, point.y, point.z)
-#     return p
 
 
 def dist_from_center(point, center):
     square_dist = (point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2
-    return square_dist ** (0.5)
+    return square_dist ** 0.5
 
 
 # update_center will find the true center of the possible circle using gradient descent
 def update_center(points):
-    # print("start update center")
-    # print(len(pc_li))
     global center, r, isFinshed
 
     grad_center_arr = []
 
-    # isFinshed = False
     if len(points) > 0:
         new_center = center
         grad_center_arr.append(new_center)
@@ -158,15 +146,13 @@ def update_center(points):
             gradient = (gradient[0] / len(points), gradient[1] / len(points))
             new_center = (new_center[0] - rate * gradient[0], new_center[1] - rate * gradient[1])
             grad_center_arr.append(new_center)
-        # print("center, new center", center, new_center)
-        # print("end update center")
-        # print(len(pc_li))
+
         isFinshed = True
-        # print(new_center)
         return new_center, grad_center_arr
     else:
         isFinshed = True
         return
+
 
 def make_PC_from_Laser(laser_in):
     cloud = []
@@ -183,7 +169,9 @@ def make_PC_from_Laser(laser_in):
                 laserSettings["angle_min"] + x * laserSettings["angle_increment"]), 0))
     return cloud
 
+
 def make_PC_from_Laser_display(laser_in):
+
     # Initialize a point cloud object
     pc_out = PointCloud()
     # Converts the message from a LaserScan to a Point Cloud
@@ -201,19 +189,14 @@ def make_PC_from_Laser_display(laser_in):
     for cc in cloud:
         pc_out.points.append(Point(cc[0], cc[1], cc[2]))
         pc_out.channels[0].values.append(.99)
-    # print("end make pc from laser")
-    # print(len(pc_li))
-    # Returns the formatted point cloud
-    # print(pc_display)
     return pc_out
+
 
 def updateLaser(data):
     global lastLaser, pc_li, isFinshed, pc_display
-    # print("IS FINISEDH?" + str(isFinshed))
+
     if isFinshed:
-        # print("START UPDATE LASER " + str(len(pc_li)))pc_display
         lastLaser = copy.deepcopy(data)
-        # print("updateLaser")
         if "angle_increment" not in laserSettings:
             laserSettings["angle_min"] = data.angle_min
             laserSettings["angle_max"] = data.angle_max
@@ -221,19 +204,16 @@ def updateLaser(data):
             laserSettings["angle_increment"] = data.angle_increment
             laserSettings["range_min"] = data.range_min
             laserSettings["range_max"] = data.range_max
-            # build_bg(data)
-        # Convert the inputted LaserScan into a Point Cloud
-        # print ("FINSIEHD UPDATE LASER")
-        # print(len(pc_li))
+
         pc_li = make_PC_from_Laser(data)
         pc_display = make_PC_from_Laser_display(data)
+
 
 def showCircles():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
     global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color
 
-    # print("start")
 
     # initialize the node for ROS
     rospy.init_node("ankle_markers")
@@ -246,7 +226,6 @@ def showCircles():
 
     # Set the frame for Point Cloud in Rviz
     pc_li.header.frame_id = "bg_cloud"
-
 
     while not rospy.is_shutdown():
 
@@ -283,7 +262,6 @@ def showCircles():
                 # list of indexes making up the cluster
                 ind_list = []
 
-
                 # finding where to start the cluster (if the point cloud is not inf)
                 # if not math.isinf(lastLaser.ranges[center_index]):
                 #  obtaining the list of indexes making up the cluster and the possible center of the circle
@@ -295,7 +273,7 @@ def showCircles():
 
                     # FOR TESTING: Marking each cluster with a different color
                     # rand_color = (random.randint(0,254)/255.0, random.randint(0,254)/255.0, random.randint(0,254)/255.0)
-                    #random.uniform(0,1), random.uniform(0,1), random.uniform(0,1), 1)
+                    # random.uniform(0,1), random.uniform(0,1), random.uniform(0,1), 1)
                     # print(rand_color)
                     for ind in ind_list:
 
@@ -326,11 +304,12 @@ def showCircles():
                         testMarks.markers[-1].type = Marker.SPHERE
                         testMarks.markers[-1].scale = Vector3(.03, .03, .03)
                         testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(rand_color[group_index % 200][0], rand_color[group_index % 200][1], rand_color[group_index % 200][2] ,1)
+                        testMarks.markers[-1].color = ColorRGBA(rand_color[group_index % 200][0],
+                                                                rand_color[group_index % 200][1],
+                                                                rand_color[group_index % 200][2], 1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                         testMarks.markers[-1].ns = "clusters"
                         id += 1  # keep the ids unique
-
 
                     # if the shape can be considered to be a circle, then add the midpoint (key) and the index list making up the portion of the circle
                     clusters.append((midrange, ind_list))
@@ -387,32 +366,14 @@ def showCircles():
                     testMarks.markers[-1].type = Marker.SPHERE
                     testMarks.markers[-1].scale = Vector3(.01, .01, .01)
                     testMarks.markers[-1].action = 0
-                    testMarks.markers[-1].color = ColorRGBA(0, .9 , .5, 1)
+                    testMarks.markers[-1].color = ColorRGBA(0, .9, .5, 1)
                     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                     testMarks.markers[-1].ns = "last_midpoint"
                     id += 1  # keep the ids unique
 
-                    # testMarks.markers.append(Marker())
-                    # testMarks.markers[-1].id = id
-                    #
-                    # testMarks.markers[-1].pose = Pose(
-                    #     # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                    #     Point(1, 1, 0),
-                    #     Quaternion(0, 0, 0, 1))
-                    # testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-                    #
-                    # testMarks.markers[-1].type = Marker.SPHERE
-                    # testMarks.markers[-1].scale = Vector3(1, 1, 0)
-                    # testMarks.markers[-1].action = 0
-                    # testMarks.markers[-1].color = ColorRGBA(0, .9 , .5, .5)
-                    # testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-                    # testMarks.markers[-1].ns = "random"
-                    # id += 1
-
                     point_for_update = []
 
                     for i in ind_list:
-
                         # add the x,y,z rectangular point into the array for use in update_center
                         point_for_update.append((pc_li[i]))
 
@@ -470,16 +431,8 @@ def showCircles():
                     # determining how long the markers will stay up in Rviz
                     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
-                    # find the tf of the laser to the parent map
-                    # this tf will be used to translate the circles to match the laser's map
-                    # try:
-                    #     (trans, rot) = tf_listen.lookupTransform('/laser_hog', '/map', rospy.Time(0))
-                    # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                    #     continue
-
                     # postioning will be relative to the tf of the laser
                     testMarks.markers[-1].pose = Pose(
-                        # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
                         Point(updated_center[0], updated_center[1], 0),
                         Quaternion(0, 0, 0, 1))
 
@@ -492,14 +445,11 @@ def showCircles():
                     id += 1  # keep the ids unique
 
                     if within_circle:
-                        # temp_r = dist_from_center(point_for_update[0], updated_center)
-
-                        # print(str(updated_center) + " " + str(dist_from_center(point_for_update[0], updated_center)))
 
                         # set a minimum range away from the laser to detect circles
                         # this will remove alot of the false positives we are getting that are close to the laser
                         # (assume that targets are not within 1 meter)
-                        if dist_from_center((0,0), updated_center) >= 1.0:
+                        if dist_from_center((0, 0), updated_center) >= 1.0:
 
                             # add the updated center to a list of circles (used later on in triangle_finder)
                             center_points.append(updated_center + (id,))
@@ -527,7 +477,7 @@ def showCircles():
                                 Quaternion(0, 0, 0, 1))
 
                             testMarks.markers[-1].type = Marker.SPHERE
-                            testMarks.markers[-1].scale = Vector3(2* r, 2 * r, .01)
+                            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, .01)
                             testMarks.markers[-1].action = 0
                             testMarks.markers[-1].color = ColorRGBA(.0, .8, .27, .1)
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
@@ -537,7 +487,6 @@ def showCircles():
                             # FOR TESTING
                             # Display the grad descent process
                             for pt in grad_center_arr1:
-
                                 # add a new marker to the marker array
                                 testMarks.markers.append(Marker())
 
@@ -565,21 +514,18 @@ def showCircles():
                 # iterate to the next laser point available
                 center_index += len(ind_list) + 1
 
-                # else:  # if the certain index at this angle is inf, don't bother running through the algorithm
-                # iterate to the next laser point available
-                # center_index += 1
-
             # publish the marker array to be displayed on Rviz
             circleMarks.publish(testMarks)
 
             # Publish the Point Cloud data
-            # print(pc_li)
             bg_pub.publish(pc_display)
 
+            # Finds the calibration triangle using the circles detected before
             triangle_finder()
+
+
             isFinshed = True
             print("****************************************************************************")
-
 
 
 # finds the triangle made by three circles
@@ -593,20 +539,16 @@ def triangle_finder():
     leg_a = float(sys.argv[1])
     leg_b = float(sys.argv[2])
     leg_c = float(sys.argv[3])
-    angle_a = math.sin(leg_a / leg_c)
-    angle_b = math.sin(leg_b / leg_c)
-    angle_c = math.pi / 2.0
     margin = .03
 
-    # for testing
-    # center_points = [(0, 0), (0.3, 0), (0, 0.4), (.4, .3)]
-
+    # for storing all possible legs
     len_measurment_arr = []
     possible_legs_a = []
     possible_legs_b = []
     possible_legs_c = []
 
-    possible_legs_matrix = [[0 for x in range(len(center_points))] for y in range(len(center_points))]
+    # possible_legs_matrix = [[0 for x in range(len(center_points))] for y in range(len(center_points))]
+
     print(len(center_points))
     for i in range(0, len(center_points)):
         for j in range(i, len(center_points)):
@@ -617,18 +559,18 @@ def triangle_finder():
                 # checking to see if the lengths between two circles could be one of the legs
                 if leg_a - margin < temp_dist < leg_a + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg a'])
-                    possible_legs_matrix[i][j] = 'a'
+                    # possible_legs_matrix[i][j] = 'a'
                     possible_legs_a.append([center_points[i], center_points[j]])
                 elif leg_b - margin < temp_dist < leg_b + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg b'])
-                    possible_legs_matrix[i][j] = 'b'
+                    # possible_legs_matrix[i][j] = 'b'
                     possible_legs_b.append([center_points[i], center_points[j]])
                 elif leg_c - margin < temp_dist < leg_c + margin:
                     len_measurment_arr.append([center_points[i], center_points[j], 'leg c'])
-                    possible_legs_matrix[i][j] = 'c'
+                    # possible_legs_matrix[i][j] = 'c'
                     possible_legs_c.append([center_points[i], center_points[j]])
 
-    print(possible_legs_matrix)
+    # print(possible_legs_matrix)
     possible_triangle = []
     testMarks = MarkerArray()
     id = 0
@@ -639,7 +581,7 @@ def triangle_finder():
     #
     #     # keep the marker ids unique
     #     testMarks.markers[-1].id = id
-    #
+    # are
     #     # determining how long the markers will stay up in Rviz
     #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
     #     testMarks.markers[-1].type = Marker.LINE_STRIP
@@ -689,32 +631,22 @@ def triangle_finder():
     #     id += 1  # keep the ids unique
 
 
-    print(len(possible_legs_a))
-    print(len(possible_legs_b))
-    print(len(possible_legs_c))
+    # print(len(possible_legs_a))
+    # print(len(possible_legs_b))
+    # print(len(possible_legs_c))
 
-    # find the angle between the lines to determine which could be in the tirangle
-    # efficiency of n^3, probably a way to make this more efficient
-    # if there is a chance to find a triangle (possible if there is at least one leg)
-    angle_range = 5.0 / 180.0 * math.pi
-    diff_from_90 = angle_range
-    final_triangle = [] # returns the most accurate triangle (should be the calibartion target)
 
-    if (len(possible_legs_c) > 0 and len(possible_legs_b) > 0 and len(possible_legs_a) > 0):
+    # Finding the triangle using the lengths given and shared points
+    # Making sure that there is at least one possibility for each leg
+    if len(possible_legs_c) > 0 and len(possible_legs_b) > 0 and len(possible_legs_a) > 0:
         for a in possible_legs_a:
             for b in possible_legs_b:
                 for c in possible_legs_c:
 
+                    # storing all the centers for this combination
                     list_of_centers = []
-                    print(a[0][2])
-                    print(a[1][2])
-                    print('wefwaeaf')
-                    print(b[0][2])
-                    print(b[1][2])
-                    print('3r09jfww')
-                    print(c[0][2])
-                    print(c[1][2])
 
+                    # if the point is distinct, add to the array
                     if a[0][2] not in list_of_centers:
                         list_of_centers.append(a[0][2])
 
@@ -733,56 +665,15 @@ def triangle_finder():
                     if c[1][2] not in list_of_centers:
                         list_of_centers.append(c[1][2])
 
+                    # if there are three and only three distinct points, its our triangle
                     if len(list_of_centers) > 3:
                         continue
 
-                    print("has target")
-                    possible_triangle.append([a,b,c])
+                    # if three distinct points, add to possible triangles
+                    possible_triangle.append([a, b, c])
 
-                    # a_dist = dist_from_center(a[0], a[1])
-                    # b_dist = dist_from_center(b[0], b[1])
-                    # c_dist = dist_from_center(c[0], c[1])
-                    # # print(str(a_dist) + " " + str(b_dist) + " " + str(c_dist)))
-                    #
-                    # # finds the gradient of both legs
-                    # grad_a = float((a[0][1] - a[1][1]) / (a[0][0] - a[1][0]))
-                    # grad_b = float((b[0][1] - b[1][1]) / (b[0][0] - b[1][0]))
-                    # grad_c = float((c[0][1] - c[1][1]) / (c[0][0] - c[1][0]))
-                    #
-                    # # finds the angles between each leg using trig
-                    # angle_c_test = math.atan((grad_a - grad_b)/(1 + grad_b*grad_a))
-                    # angle_b_test = math.atan((grad_a - grad_c)/(1 + grad_a*grad_c))
-                    # angle_a_test = math.atan((grad_b - grad_c)/(1 + grad_b*grad_c))
-                    #
-                    # print(a_dist)
-                    # print(b_dist)
-                    # print(c_dist)
-                    # print("angles")
-                    # print(a)
-                    # print(grad_a)
-                    # print(b)
-                    # print(grad_b)
-                    # print(c)
-                    # print(grad_c)
-                    #
-                    # print("looking for...")
-                    # print(str(angle_a) + " " + str(angle_b) + " " + str(angle_c))
-                    # print(str(angle_a_test) + " " + str(angle_b_test) + " " + str(angle_c_test))
-                    # print("margin ..."  + str(angle_range))
-                    # print(math.sin(b_dist / c_dist))
-                    #
-                    # # if the angles between each line are within the angles of the calibration target's triangle,
-                    # # consider it as a possible triangle
-                    # if (angle_a - angle_range < math.sin(a_dist / c_dist) < angle_a + angle_range) and \
-                    #         (angle_b - angle_range < math.sin(b_dist / c_dist) < angle_b + angle_range) and \
-                    #         (angle_a - angle_range < math.tan(a_dist / b_dist) < angle_a + angle_range) and \
-                    #         (angle_b - angle_range < math.tan(b_dist / a_dist) < angle_b + angle_range):
-                    #     possible_triangle.append([a, b, c])
-
-    print(possible_triangle)
-
+    # Displaying the triangle on Rviz
     for triangle in possible_triangle:
-        print(triangle)
         leg_num = 1
         for line_points in triangle:
 
@@ -813,74 +704,11 @@ def triangle_finder():
             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
             testMarks.markers[-1].ns = "final_triangle"
             id += 1  # keep the ids unique
-    #
-    # for line_points in final_triangle:
-    #     # add a new marker to the marker array
-    #     testMarks.markers.append(Marker())
-    #
-    #     # keep the marker ids unique
-    #     testMarks.markers[-1].id = id
-    #
-    #     # determining how long the markers will stay up in Rviz
-    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-    #     testMarks.markers[-1].type = Marker.LINE_STRIP
-    #     testMarks.markers[-1].scale = Vector3(.03, .03, .01)
-    #     testMarks.markers[-1].action = 0
-    #     testMarks.markers[-1].color = ColorRGBA(.9, .2, .9, 1)
-    #     testMarks.markers[-1].points = [Point(line_points[0][0], line_points[0][1], 0),
-    #                                     Point(line_points[1][0], line_points[1][1], 0)]
-    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-    #     testMarks.markers[-1].ns = "final_triangle"
-    #     id += 1  # keep the ids unique
 
-    # print(possible_triangle)
-    #
-    # for tri in possible_triangle:
-    #     triangle_points = []
-    #     print("tri")
-    #     print(tri)
-    #     for pt in tri:
-    #         print("pt")
-    #         print(pt)
-    #         for ptp in pt:
-    #             if ptp not in triangle_points:
-    #                 triangle_points.append(ptp)
-    #
-    #     print("triangle")
-    #     print(triangle_points)
-    #     # add a new marker to the marker array
-    #     testMarks.markers.append(Marker())
-    #
-    #     # keep the marker ids unique
-    #     testMarks.markers[-1].id = id
-    #
-    #     # determining how long the markers will stay up in Rviz
-    #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-    #     testMarks.markers[-1].type = Marker.TRIANGLE_LIST
-    #     testMarks.markers[-1].scale = Vector3(1, 1, 1)
-    #     testMarks.markers[-1].action = 0
-    #     testMarks.markers[-1].color = ColorRGBA(.7,.7,.2, 1)
-    #     testMarks.markers[-1].points = [Point(triangle_points[0][0], triangle_points[0][1], 0),
-    #                                     Point(triangle_points[1][0], triangle_points[1][1], 0),
-    #                                     Point(triangle_points[2][0], triangle_points[2][1], 0)]
-    #     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-    #     testMarks.markers[-1].ns = "triangle"
-    #     id += 1  # keep the ids unique
-
+    # Publish triangle
     triangle_marks.publish(testMarks)
 
 
-    # for i in range(0, len(center_points)):
-    #     for j in range(i, len(center_points)):
-    #         if i != j:
-    #             if possible_legs_matrix[i][j] = 'a':
-    #                 for x in range(i, len(center_points)):
-    #                     if possible_legs_matrix[x][j] = 'b':
-    #                         for y in range(j, len(center_points)):
-    #                             if possible_legs_matrix[x][y] = 'c':
 
-
-
-    # exit()
 if __name__ == '__main__':
     showCircles()
