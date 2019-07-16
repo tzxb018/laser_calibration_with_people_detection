@@ -40,7 +40,7 @@ center_index = 0
 center_angle = 0
 rate = .2
 error = 0.001
-circle_threshold = 15
+circle_threshold = 10
 center_points = []  # stores the centers of each detected circle
 possible_triangle = [] # stores the point that make up the calibration target
 laserSettings = {}
@@ -220,16 +220,16 @@ def showCircles():
 
 
     # initialize the node for ROS
-    rospy.init_node("cirlce_marker")
+    rospy.init_node("cirlce_marker_hog")
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
-    circleMarks = rospy.Publisher("/possible_circles", MarkerArray, queue_size=10)
-    bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
+    circleMarks = rospy.Publisher("/hog/possible_circles", MarkerArray, queue_size=10)
+    bg_pub = rospy.Publisher('/hog/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
 
     # Set the frame for Point Cloud in Rviz
-    pc_li.header.frame_id = "bg_cloud"
+    pc_li.header.frame_id = "/hog/bg_cloud"
 
     while not rospy.is_shutdown():
 
@@ -536,14 +536,14 @@ def showCircles():
 def triangle_finder():
     global center_points, possible_triangle
 
-    triangle_marks = rospy.Publisher("/triangles", MarkerArray, queue_size=10)
+    triangle_marks = rospy.Publisher("/hog/triangles", MarkerArray, queue_size=10)
 
     # measurements of physical triangle (calibration target)
     # leg c is the hypotenuse
     leg_a = float(sys.argv[1])
     leg_b = float(sys.argv[2])
     leg_c = float(sys.argv[3])
-    margin = .03
+    margin = .05
 
     # for storing all possible legs
     len_measurment_arr = []
@@ -718,18 +718,12 @@ def triangle_finder():
 def matrix_transformation():
     global possible_triangle
 
-    publisher = rospy.Publisher('matrix_for_hog', matrix_tf, queue_size=10)
+    publisher = rospy.Publisher('/matrix_for_hog', matrix_tf, queue_size=10)
     # rospy.init_node('hog_talker', anonymous=True)
 
     basis = matrix_tf()
-    # basis.layout.dim.append(MultiArrayDimension())
-    # # basis.layout.dim.append(MultiArrayDimension())
-    # basis.layout.dim[0].label = "hog data"
-    # # basis.layout.dim[1].label = "rise"
-    # basis.layout.dim[0].size = 4
-    # # basis.layout.dim[1].size = 2
-    # basis.layout.dim[0].stride = 1
-    # # basis.layout.dim[1].stride = 1
+    basis.header.stamp = rospy.Time.now()
+    basis.header.frame_id = "/map"
 
     if len(possible_triangle) > 0:
         for triangle in possible_triangle:
@@ -744,31 +738,15 @@ def matrix_transformation():
             grad_b_rise = float((line_b[0][1] - line_b[1][1]))
             grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-            basis = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run]
+            basis.matrix_tf = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run]
 
-            # basis.data.append(grad_a_rise)
-            # basis.data.append(grad_a_run)
-            # basis.data.append(grad_b_rise)
-            # basis.data.append(grad_b_run)
-            # basis.data = numpy.array([[grad_a_rise,grad_b_rise],[grad_a_run,grad_b_run]])
-            print(basis)
-            # print(basis)
-            # print(grad_a_rise)
-            # print(grad_a_run)
-            # print(grad_b_rise)
-            # print(grad_b_run)
-
-            # change_from_standard_to_this_basis = inv(basis)
-
-            # print(change_from_standard_to_this_basis)
-
-
-
-            # while not rospy.is_shutdown():
             publisher.publish(basis)
     else:
-        a = 1
-        # publisher.publish("hog_basis", basis)
+
+        basis.matrix_tf = [0.0, 0.0, 0.0, 0.0]
+
+        publisher.publish(basis)
+
 
 
 if __name__ == '__main__':
