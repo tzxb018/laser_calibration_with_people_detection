@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+from rospy.numpy_msg import numpy_msg
 import math
 import copy
 import sys
@@ -12,7 +13,8 @@ from sensor_msgs.msg import LaserScan, PointCloud2, PointCloud, ChannelFloat32
 import sensor_msgs.point_cloud2 as pc
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
-from std_msgs.msg import Header, ColorRGBA
+from std_msgs.msg import Header, ColorRGBA, Float64MultiArray, MultiArrayLayout,MultiArrayDimension
+from lc.msg import matrix_tf
 import random
 from numpy.linalg import inv
 
@@ -218,7 +220,7 @@ def showCircles():
 
 
     # initialize the node for ROS
-    rospy.init_node("ankle_markers")
+    rospy.init_node("cirlce_marker")
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
@@ -716,30 +718,57 @@ def triangle_finder():
 def matrix_transformation():
     global possible_triangle
 
-    for triangle in possible_triangle:
+    publisher = rospy.Publisher('matrix_for_hog', matrix_tf, queue_size=10)
+    # rospy.init_node('hog_talker', anonymous=True)
 
-        # find the a and b legs (the perpendicular)
-        line_a = triangle[0]
-        line_b = triangle[1]
+    basis = matrix_tf()
+    # basis.layout.dim.append(MultiArrayDimension())
+    # # basis.layout.dim.append(MultiArrayDimension())
+    # basis.layout.dim[0].label = "hog data"
+    # # basis.layout.dim[1].label = "rise"
+    # basis.layout.dim[0].size = 4
+    # # basis.layout.dim[1].size = 2
+    # basis.layout.dim[0].stride = 1
+    # # basis.layout.dim[1].stride = 1
 
-        # finding the basis using the legs
-        grad_a_rise = float((line_a[0][1] - line_a[1][1]))
-        grad_a_run = float(line_a[0][0] - line_a[1][0])
-        grad_b_rise = float((line_b[0][1] - line_b[1][1]))
-        grad_b_run = float(line_b[0][0] - line_b[1][0])
+    if len(possible_triangle) > 0:
+        for triangle in possible_triangle:
 
-        basis = numpy.array([[grad_a_rise,grad_b_rise],[grad_a_run,grad_b_run]])
+            # find the a and b legs (the perpendicular)
+            line_a = triangle[0]
+            line_b = triangle[1]
 
-        print(basis)
-        print(grad_a_rise)
-        print(grad_a_run)
-        print(grad_b_rise)
-        print(grad_b_run)
+            # finding the basis using the legs
+            grad_a_rise = float((line_a[0][1] - line_a[1][1]))
+            grad_a_run = float(line_a[0][0] - line_a[1][0])
+            grad_b_rise = float((line_b[0][1] - line_b[1][1]))
+            grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-        change_from_standard_to_this_basis = inv(basis)
+            basis = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run]
 
-        print(change_from_standard_to_this_basis)
+            # basis.data.append(grad_a_rise)
+            # basis.data.append(grad_a_run)
+            # basis.data.append(grad_b_rise)
+            # basis.data.append(grad_b_run)
+            # basis.data = numpy.array([[grad_a_rise,grad_b_rise],[grad_a_run,grad_b_run]])
+            print(basis)
+            # print(basis)
+            # print(grad_a_rise)
+            # print(grad_a_run)
+            # print(grad_b_rise)
+            # print(grad_b_run)
 
+            # change_from_standard_to_this_basis = inv(basis)
+
+            # print(change_from_standard_to_this_basis)
+
+
+
+            # while not rospy.is_shutdown():
+            publisher.publish(basis)
+    else:
+        a = 1
+        # publisher.publish("hog_basis", basis)
 
 
 if __name__ == '__main__':
