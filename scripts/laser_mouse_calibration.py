@@ -54,6 +54,7 @@ pc_display = PointCloud()
 isFinshed = True
 rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
               range(0, 200)]
+send_matrix = []
 
 
 def ind_angle(b_angle):
@@ -718,7 +719,7 @@ def triangle_finder():
 
 # finding the matrix transformation using the triangle
 def matrix_transformation():
-    global possible_triangle
+    global possible_triangle, send_matrix
 
     publisher = rospy.Publisher('/matrix_for_mouse', matrix_tf, queue_size=10)
     # rospy.init_node('hog_talker', anonymous=True)
@@ -734,19 +735,32 @@ def matrix_transformation():
             line_a = triangle[0]
             line_b = triangle[1]
 
+            # finds the common point between legs a and b, the right angle of the triangle
+            # this point will be used as a reference point
+            print(line_a)
+            print(line_b)
+            print(triangle[1][0])
+            print(triangle[1])
+            if triangle[0][0] in triangle[1]:
+                point_c = triangle[0][0]
+            else:
+                point_c = triangle[1][1]
+
+            print(point_c)
+
             # finding the basis using the legs
             grad_a_rise = float((line_a[0][1] - line_a[1][1]))
             grad_a_run = float(line_a[0][0] - line_a[1][0])
             grad_b_rise = float((line_b[0][1] - line_b[1][1]))
             grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-            basis.matrix_tf = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run]
+            send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run,  point_c[0], point_c[1]]
+            basis.matrix_tf = send_matrix
             # print(basis.matrix_tf)
             publisher.publish(basis)
     else:
 
-        basis.matrix_tf = [0.0, 0.0, 0.0, 0.0]
-
+        basis.matrix_tf = send_matrix
         publisher.publish(basis)
 
 
