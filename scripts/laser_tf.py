@@ -46,7 +46,7 @@ def laser_tf(req):
     # theta = theta_q - theta_hog
     # theta = theta_q - theta_mouse
     theta = theta_dest - theta_source
-    return (0, Point(dest_point_c.x, dest_point_c.y, 0), theta, 0, Point(-source_point_c.x, -source_point_c.y, 0))
+    return 0, Point(dest_point_c.x, dest_point_c.y, 0), theta, 0, Point(-source_point_c.x, -source_point_c.y, 0)
 
     # return (theta_dest, Point(dest_point_c.x, dest_point_c.y, 0), -theta, theta_source, Point(-source_point_c.x, -source_point_c.y, 0))
 #         source_theta

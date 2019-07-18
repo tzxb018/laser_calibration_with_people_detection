@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import rospy
 import tf
-from lc.srv import Laser_tf
+from lc.srv import Laser_tf, Detection_target
 from sensor_msgs.msg import LaserScan, PointCloud2, PointCloud, ChannelFloat32
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
+import copy
 
 import numpy
 from lc.msg import matrix_tf
@@ -22,6 +23,11 @@ mouse_pc = []
 mouse_pc_header = []
 mouse_ref_point_c = (0,0)
 mouse_ref_point_a = (0,0)
+laserSettings = {}
+
+lastLaser_hog, laser_pub_hog = [], []
+lastLaser_mouse, laser_pub_mouse = [], []
+
 
 def callback_hog_matrx(data):
     global hog_matrix, hog_ref_point_c, hog_ref_point_a
@@ -48,6 +54,37 @@ def callback_mouse_pc(data):
 
     mouse_pc_header = data.header
     mouse_pc = data.points
+
+def callback_hog_laser(data):
+    global lastLaser_hog, laser_pub_hog
+
+    lastLaser_hog = copy.deepcopy(data)
+    if "angle_increment" not in laserSettings:
+        laserSettings["angle_min"] = data.angle_min
+        laserSettings["angle_max"] = data.angle_max
+        laserSettings["array_size"] = len(data.ranges)
+        laserSettings["angle_increment"] = data.angle_increment
+        laserSettings["range_min"] = data.range_min
+        laserSettings["range_max"] = data.range_max
+
+    # lastLaser_hog.header.stamp = rospy.Time.now()
+    # laser_pub_hog.publish(lastLaser_hog)
+
+def callback_mouse_laser(data):
+    global lastLaser_mouse, laser_pub_mouse
+
+    lastLaser_mouse = copy.deepcopy(data)
+    if "angle_increment" not in laserSettings:
+        laserSettings["angle_min"] = data.angle_min
+        laserSettings["angle_max"] = data.angle_max
+        laserSettings["array_size"] = len(data.ranges)
+        laserSettings["angle_increment"] = data.angle_increment
+        laserSettings["range_min"] = data.range_min
+        laserSettings["range_max"] = data.range_max
+
+    # lastLaser_mouse.header.stamp = rospy.Time.now()
+    # laser_pub_mouse.publish(lastLaser_mouse)
+
 #
 # def updateLaserHog(data):
 #     global laser_hog
@@ -59,15 +96,24 @@ def callback_mouse_pc(data):
 #
 #     laser_mouse = data
 
-
 if __name__ == '__main__':
+
     rospy.init_node('laser_tf_broadcaster')
     r = rospy.Rate(10)
     #
     # laserList_mouse = rospy.Subscriber("/mouse/scan0", LaserScan, updateLaserMouse)
     # laserList_hog = rospy.Subscriber("/hog/scan0", LaserScan, updateLaserHog)
+    # laser_sub_hog = rospy.Subscriber("/hog/scan0", LaserScan, callback_hog_laser)
+    # laser_sub_mouse = rospy.Subscriber("/mouse/scan0", LaserScan, callback_mouse_laser)
+
+    # laser_pub_hog = rospy.Publisher("/hog/updatedScan", LaserScan, queue_size = 10)
+    # laser_pub_mouse = rospy.Publisher("/mouse/updatedScan", LaserScan, queue_size = 10)
 
     laser_tf_listener = rospy.ServiceProxy('laser_tf', Laser_tf)
+    laser_target_finder = rospy.ServiceProxy('detection_target', Detection_target)
+
+
+
 
     # hog_sub = rospy.Subscriber("/matrix_for_hog", matrix_tf, callback_hog_matrx)
     # hog_bg_sub = rospy.Subscriber('/hog/bg_cloud', PointCloud, callback_hog_pc)
@@ -75,15 +121,36 @@ if __name__ == '__main__':
     # mouse_sub = rospy.Subscriber("/matrix_for_mouse", matrix_tf, callback_mouse_matrix)
     # mouse_bg_sub = rospy.Subscriber('/mouse/bg_cloud', PointCloud, callback_mouse_pc)
 
-    callback_hog_matrx(rospy.wait_for_message("/matrix_for_hog", matrix_tf))
-    callback_hog_pc(rospy.wait_for_message('/hog/bg_cloud', PointCloud))
-    callback_mouse_matrix(rospy.wait_for_message("/matrix_for_mouse", matrix_tf))
-    callback_mouse_pc(rospy.wait_for_message('/mouse/bg_cloud', PointCloud))
+    # callback_hog_matrx(rospy.wait_for_message("/matrix_for_hog", matrix_tf))
+    # callback_hog_pc(rospy.wait_for_message('/hog/bg_cloud', PointCloud))
+    # callback_mouse_matrix(rospy.wait_for_message("/matrix_for_mouse", matrix_tf))
+    # callback_mouse_pc(rospy.wait_for_message('/mouse/bg_cloud', PointCloud))
 
-    ret = laser_tf_listener(Point(mouse_ref_point_c[0], mouse_ref_point_c[1], 0),
-                      Point(hog_ref_point_c[0], hog_ref_point_c[1], 0),
-                      Point(mouse_ref_point_a[0], mouse_ref_point_a[1], 0),
-                      Point(hog_ref_point_a[0], hog_ref_point_a[1], 0))
+
+
+    callback_hog_laser(rospy.wait_for_message('/hog/scan0', LaserScan))
+    callback_mouse_laser(rospy.wait_for_message('mouse/scan0', LaserScan))
+
+
+
+
+    # calls the service for finding the calibration target
+    reu = laser_target_finder(lastLaser_hog)
+    hog_ref_point_a = reu.point_a
+    hog_ref_point_c = reu.point_c
+
+    rev = laser_target_finder(lastLaser_mouse)
+    mouse_ref_point_a = rev.point_a
+    mouse_ref_point_c = rev.point_c
+
+    print(hog_ref_point_a)
+    print(mouse_ref_point_a)
+
+    # calls the service for finding the tfs between two frames
+    ret = laser_tf_listener(Point(mouse_ref_point_c.x, mouse_ref_point_c.y, 0),
+                      Point(hog_ref_point_c.x, hog_ref_point_c.y, 0),
+                      Point(mouse_ref_point_a.x, mouse_ref_point_a.y, 0),
+                      Point(hog_ref_point_a.x, hog_ref_point_a.y, 0))
 
     br = tf.TransformBroadcaster()
 
