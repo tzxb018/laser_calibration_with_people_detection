@@ -51,6 +51,7 @@ lAnkle = (0, 0)
 rAnkle = (0, 0)
 pc_li = PointCloud()
 pc_display = PointCloud()
+laser_pub = []
 isFinshed = True
 rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
               range(0, 200)]
@@ -198,7 +199,7 @@ def make_PC_from_Laser_display(laser_in):
 
 
 def updateLaser(data):
-    global lastLaser, pc_li, isFinshed, pc_display
+    global lastLaser, pc_li, isFinshed, pc_display, laser_pub
 
     if isFinshed:
         lastLaser = copy.deepcopy(data)
@@ -213,11 +214,14 @@ def updateLaser(data):
         pc_li = make_PC_from_Laser(data)
         pc_display = make_PC_from_Laser_display(data)
 
+    lastLaser.header.stamp = rospy.Time.now()
+    laser_pub.publish(lastLaser)
+
 
 def showCircles():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
-    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color
+    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color, laser_pub
 
 
     # initialize the node for ROS
@@ -225,6 +229,7 @@ def showCircles():
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     laserList = rospy.Subscriber("/mouse/scan0", LaserScan, updateLaser)
+    laser_pub = rospy.Publisher("/mouse/updatedScan", LaserScan, queue_size = 10)
     circleMarks = rospy.Publisher("/mouse/possible_circles", MarkerArray, queue_size=10)
     bg_pub = rospy.Publisher('/mouse/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
@@ -737,16 +742,22 @@ def matrix_transformation():
 
             # finds the common point between legs a and b, the right angle of the triangle
             # this point will be used as a reference point
-            print(line_a)
-            print(line_b)
-            print(triangle[1][0])
-            print(triangle[1])
+            # print(line_a)
+            # print(line_b)
+            # print(triangle[1][0])
+            # print(triangle[1])
+            # if triangle[0][0] in triangle[1]:
+            #     point_c = triangle[0][0]
+            # else:
+            #     point_c = triangle[1][1]
+            #
+            # print(point_c)
             if triangle[0][0] in triangle[1]:
                 point_c = triangle[0][0]
+                point_a = triangle[0][1]
             else:
-                point_c = triangle[1][1]
-
-            print(point_c)
+                point_c = triangle[0][1]
+                point_a = triangle[0][0]
 
             # finding the basis using the legs
             grad_a_rise = float((line_a[0][1] - line_a[1][1]))
@@ -754,7 +765,7 @@ def matrix_transformation():
             grad_b_rise = float((line_b[0][1] - line_b[1][1]))
             grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-            send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run,  point_c[0], point_c[1]]
+            send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
             basis.matrix_tf = send_matrix
             # print(basis.matrix_tf)
             publisher.publish(basis)
