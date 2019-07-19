@@ -1,7 +1,7 @@
 
 <launch>
   <group ns="snake">
-  <node name="rplidarNode0"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+  <node name="rplidarNode0"          pkg="rplidar_ros"  type="rplidarNode" args="scan:=scan0" output="screen">
   <param name="serial_port"         type="string" value="/dev/ttyUSB0"/>
   <param name="serial_baudrate"     type="int"    value="256000"/><!--A3 -->
   <param name="frame_id"            type="string" value="laser_snake"/>
@@ -18,10 +18,6 @@
     <param name="camera_frame_id" value="usb_cam" />
     <param name="io_method" value="mmap"/>
   </node>
-
-  <node pkg="tf2_ros" type="static_transform_publisher" name="link2_broadcaster" args="-.5 0 0 0 0 0 1 map laser_snake" />
-  <node pkg="tf2_ros" type="static_transform_publisher" name="link12_broadcaster" args="-.5 0 0 0 0 0 1 map bg_cloud_snake" />
-
  </group>
 </launch>
 
