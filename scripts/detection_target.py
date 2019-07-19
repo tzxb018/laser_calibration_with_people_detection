@@ -32,6 +32,7 @@ pc_display = PointCloud()
 laser_pub = []
 isFinshed = True
 laser_in = LaserScan()
+send_matrix = []
 
 def detection_target(req):
     global laser_in, pc_li, pc_display
@@ -45,7 +46,8 @@ def detection_target(req):
 
     out = showCircles()
     print("out")
-    print(out)
+    print("Point a\n" + str(Point(out[6], out[7], 0)))
+    print("Point c\n" + str(Point(out[4], out[5], 0)))
 
     return Point(out[6], out[7], 0), Point(out[4], out[5], 0)
 # takes in the laser scan and finds a cluster of laser points that could be a circle

@@ -754,6 +754,9 @@ def matrix_transformation():
             grad_b_rise = float((line_b[0][1] - line_b[1][1]))
             grad_b_run = float(line_b[0][0] - line_b[1][0])
 
+            print(point_a)
+            print(point_c)
+
             send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
             basis.matrix_tf = send_matrix
 
