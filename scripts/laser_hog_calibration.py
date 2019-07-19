@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+from rospy.numpy_msg import numpy_msg
 import math
 import copy
 import sys
@@ -12,8 +13,10 @@ from sensor_msgs.msg import LaserScan, PointCloud2, PointCloud, ChannelFloat32
 import sensor_msgs.point_cloud2 as pc
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
-from std_msgs.msg import Header, ColorRGBA
+from std_msgs.msg import Header, ColorRGBA, Float64MultiArray, MultiArrayLayout,MultiArrayDimension
+from lc.msg import matrix_tf
 import random
+from numpy.linalg import inv
 
 #
 # from openpose_ros_msgs.msg import *
@@ -37,8 +40,9 @@ center_index = 0
 center_angle = 0
 rate = .2
 error = 0.001
-circle_threshold = 15
+circle_threshold = 10
 center_points = []  # stores the centers of each detected circle
+possible_triangle = [] # stores the point that make up the calibration target
 laserSettings = {}
 max_range = 25.0
 center_mass_points = (0, 1, 2, 5, 8, 9, 10, 11, 12, 13, 16, 17)
@@ -50,7 +54,8 @@ pc_display = PointCloud()
 isFinshed = True
 rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
               range(0, 200)]
-
+send_matrix = []
+laser_pub = []
 
 def ind_angle(b_angle):
     # print("bangle lansermin",b_angle,laserSettings["angle_min"])
@@ -193,7 +198,7 @@ def make_PC_from_Laser_display(laser_in):
 
 
 def updateLaser(data):
-    global lastLaser, pc_li, isFinshed, pc_display
+    global lastLaser, pc_li, isFinshed, pc_display, laser_pub
 
     if isFinshed:
         lastLaser = copy.deepcopy(data)
@@ -208,24 +213,28 @@ def updateLaser(data):
         pc_li = make_PC_from_Laser(data)
         pc_display = make_PC_from_Laser_display(data)
 
+    lastLaser.header.stamp = rospy.Time.now()
+    laser_pub.publish(lastLaser)
 
 def showCircles():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
-    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color
+    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color, laser_pub
 
 
     # initialize the node for ROS
-    rospy.init_node("ankle_markers")
+    rospy.init_node("cirlce_marker_hog")
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     laserList = rospy.Subscriber("/hog/scan0", LaserScan, updateLaser)
-    circleMarks = rospy.Publisher("/possible_circles", MarkerArray, queue_size=10)
-    bg_pub = rospy.Publisher('/bg_cloud', PointCloud, queue_size=10)
+    circleMarks = rospy.Publisher("/hog/possible_circles", MarkerArray, queue_size=10)
+    bg_pub = rospy.Publisher('/hog/bg_cloud', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True, rospy.Duration(1.0))
+    laser_pub = rospy.Publisher("/hog/updatedScan", LaserScan, queue_size = 10)
+
 
     # Set the frame for Point Cloud in Rviz
-    pc_li.header.frame_id = "bg_cloud"
+    pc_li.header.frame_id = "/hog/bg_cloud"
 
     while not rospy.is_shutdown():
 
@@ -530,16 +539,16 @@ def showCircles():
 
 # finds the triangle made by three circles
 def triangle_finder():
-    global center_points
+    global center_points, possible_triangle
 
-    triangle_marks = rospy.Publisher("/triangles", MarkerArray, queue_size=10)
+    triangle_marks = rospy.Publisher("/hog/triangles", MarkerArray, queue_size=10)
 
     # measurements of physical triangle (calibration target)
     # leg c is the hypotenuse
     leg_a = float(sys.argv[1])
     leg_b = float(sys.argv[2])
     leg_c = float(sys.argv[3])
-    margin = .03
+    margin = .05
 
     # for storing all possible legs
     len_measurment_arr = []
@@ -707,6 +716,56 @@ def triangle_finder():
 
     # Publish triangle
     triangle_marks.publish(testMarks)
+
+    matrix_transformation()
+
+# finding the matrix transformation using the triangle
+def matrix_transformation():
+    global possible_triangle, send_matrix
+
+    publisher = rospy.Publisher('/matrix_for_hog', matrix_tf, queue_size=10)
+    # rospy.init_node('hog_talker', anonymous=True)
+
+    basis = matrix_tf()
+    basis.header.stamp = rospy.Time.now()
+    basis.header.frame_id = "/map"
+
+    if len(possible_triangle) > 0:
+        for triangle in possible_triangle:
+
+            # find the a and b legs (the perpendicular)
+            line_a = triangle[0]
+            line_b = triangle[1]
+
+            # print(triangle[2])
+
+            # finds the common point between legs a and b, the right angle of the triangle
+            # this point will be used as a reference point
+            if triangle[0][0] in triangle[1]:
+                point_c = triangle[0][0]
+                point_a = triangle[0][1]
+            else:
+                point_c = triangle[0][1]
+                point_a = triangle[0][0]
+
+            # finding the basis using the legs
+            grad_a_rise = float((line_a[0][1] - line_a[1][1]))
+            grad_a_run = float(line_a[0][0] - line_a[1][0])
+            grad_b_rise = float((line_b[0][1] - line_b[1][1]))
+            grad_b_run = float(line_b[0][0] - line_b[1][0])
+
+            print(point_a)
+            print(point_c)
+
+            send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
+            basis.matrix_tf = send_matrix
+
+            publisher.publish(basis)
+    else:
+
+        basis.matrix_tf = send_matrix
+
+        publisher.publish(basis)
 
 
 

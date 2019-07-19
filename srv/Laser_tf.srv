@@ -1,0 +1,10 @@
+geometry_msgs/Point source_point_c
+geometry_msgs/Point dest_point_c
+geometry_msgs/Point source_point_a
+geometry_msgs/Point dest_point_a
+---
+float32 source_theta
+geometry_msgs/Point source_translation
+float32 theta
+float32 dest_theta
+geometry_msgs/Point dest_translation
