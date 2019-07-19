@@ -36,22 +36,40 @@ laser_pub = []
 isFinshed = True
 laser_in = LaserScan()
 send_matrix = []
+laser_topic_name = ""
+max_count = 10
+min_dist = .5
 
 def detection_target(req):
-    global laser_in, pc_li, pc_display
+    global laser_in, pc_li, pc_display, max_count
+    a = 0
 
-    # getting the input laser scan for the service
-    laser_in = req.laser_in
+    while True:
+        a += 1
+        # getting the input laser scan for the service
+        # print(req)
+        laser_in = rospy.wait_for_message(req.laser_topic, LaserScan)
 
-    # print(laser_in)
-    # converting the laser scan into a point cloud for easier calculations
-    updateLaser(laser_in)
+        # laser_in = req.laser_in
 
-    out = showCircles()
-    print("out")
-    print("Point a\n" + str(Point(out[6], out[7], 0)))
-    print("Point c\n" + str(Point(out[4], out[5], 0)))
-    print("****************************************************************************")
+        # print(laser_in)
+        # converting the laser scan into a point cloud for easier calculations
+        updateLaser(laser_in)
+
+        out = showCircles()
+
+        if out != []:
+            print("out")
+            print("Point a\n" + str(Point(out[6], out[7], 0)))
+            print("Point c\n" + str(Point(out[4], out[5], 0)))
+            print("****************************************************************************")
+            break
+
+        if a >= max_count:
+            print("all attempts failed on %s"%(req.laser_topic))
+            break
+
+        print("attempt %d failed. Try again."%(a))
 
     return Point(out[6], out[7], 0), Point(out[4], out[5], 0)
 # takes in the laser scan and finds a cluster of laser points that could be a circle
@@ -209,7 +227,7 @@ def updateLaser(data):
 def showCircles():
     global ankleMarks, bg_pub, tf_listen
     global ind_list, center, center_index
-    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color, laser_pub
+    global laserList, laserSettings, isFinshed, center_points, pc_li, rand_color, laser_pub, min_dist
 
     global laser_in
 
@@ -425,7 +443,7 @@ def showCircles():
                     # this will remove alot of the false positives we are getting that are close to the laser
                     # (assume that targets are not within 1 meter)
                     # if abs(updated_center[0]) >= 1 or abs(updated_center[1]) >= 1:
-                    if dist_from_center(updated_center, (0,0)) >= 1:
+                    if dist_from_center(updated_center, (0,0)) >= min_dist:
                         # add the updated center to a list of circles (used later on in triangle_finder)
                         center_points.append(updated_center + (id,))
 
@@ -522,7 +540,7 @@ def triangle_finder():
 
     # possible_legs_matrix = [[0 for x in range(len(center_points))] for y in range(len(center_points))]
 
-    print(len(center_points))
+    # print(len(center_points))
     for i in range(0, len(center_points)):
         for j in range(i, len(center_points)):
             if i != j:
@@ -702,45 +720,47 @@ def matrix_transformation():
     # basis.header.frame_id = "/map"
 
     if len(possible_triangle) > 0:
-        for triangle in possible_triangle:
+        # for triangle in possible_triangle:
+        triangle = possible_triangle[0]
 
-            print(triangle)
+        print(triangle)
 
-            # find the a and b legs (the perpendicular)
-            line_a = triangle[0]
-            line_b = triangle[1]
+        # find the a and b legs (the perpendicular)
+        line_a = triangle[0]
+        line_b = triangle[1]
 
-            # finds the common point between legs a and b, the right angle of the triangle
-            # this point will be used as a reference point
-            # print(line_a)
-            # print(line_b)
-            # print(triangle[1][0])
-            # print(triangle[1])
-            # if triangle[0][0] in triangle[1]:
-            #     point_c = triangle[0][0]
-            # else:
-            #     point_c = triangle[1][1]
-            #
-            # print(point_c)
-            if triangle[0][0] in triangle[1]:
-                point_c = triangle[0][0]
-                point_a = triangle[0][1]
-            else:
-                point_c = triangle[0][1]
-                point_a = triangle[0][0]
+        # finds the common point between legs a and b, the right angle of the triangle
+        # this point will be used as a reference point
+        # print(line_a)
+        # print(line_b)
+        # print(triangle[1][0])
+        # print(triangle[1])
+        # if triangle[0][0] in triangle[1]:
+        #     point_c = triangle[0][0]
+        # else:
+        #     point_c = triangle[1][1]
+        #
+        # print(point_c)
+        if triangle[0][0] in triangle[1]:
+            point_c = triangle[0][0]
+            point_a = triangle[0][1]
+        else:
+            point_c = triangle[0][1]
+            point_a = triangle[0][0]
 
-            # finding the basis using the legs
-            grad_a_rise = float((line_a[0][1] - line_a[1][1]))
-            grad_a_run = float(line_a[0][0] - line_a[1][0])
-            grad_b_rise = float((line_b[0][1] - line_b[1][1]))
-            grad_b_run = float(line_b[0][0] - line_b[1][0])
+        # finding the basis using the legs
+        grad_a_rise = float((line_a[0][1] - line_a[1][1]))
+        grad_a_run = float(line_a[0][0] - line_a[1][0])
+        grad_b_rise = float((line_b[0][1] - line_b[1][1]))
+        grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-            send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
-            return send_matrix
-            # basis.matrix_tf = send_matrix
-            # print(basis.matrix_tf)
-            # publisher.publish(basis)
+        send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
+        return send_matrix
+        # basis.matrix_tf = send_matrix
+        # print(basis.matrix_tf)
+        # publisher.publish(basis)
     else:
+        send_matrix = []
         return send_matrix
         # basis.matrix_tf = send_matrix
         # publisher.publish(basis)
