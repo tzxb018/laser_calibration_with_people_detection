@@ -110,7 +110,6 @@ def publish_tf():
     laser_sub_hog = rospy.Subscriber("/hog/scan0", LaserScan, callback_hog_laser)
     laser_sub_mouse = rospy.Subscriber("/mouse/scan0", LaserScan, callback_mouse_laser)
 
-    laser_tf_listener = rospy.ServiceProxy('laser_tf', Laser_tf)
     laser_target_finder = rospy.ServiceProxy('detection_target', Detection_target)
 
     laser_pub_hog = rospy.Publisher("/hog/updatedScan", LaserScan, queue_size = 10)
@@ -150,6 +149,8 @@ def publish_tf():
     # print(mouse_ref_point_a)
     # print(mouse_ref_point_c)
 
+    laser_tf_listener = rospy.ServiceProxy('laser_tf', Laser_tf)
+
     # calls the service for finding the tfs between two frames
     ret = laser_tf_listener(Point(mouse_ref_point_c.x, mouse_ref_point_c.y, 0),
                             Point(hog_ref_point_c.x, hog_ref_point_c.y, 0),
@@ -159,10 +160,6 @@ def publish_tf():
     br = tf.TransformBroadcaster()
 
     while not rospy.is_shutdown():
-
-        # call the laser update to publish the updated laser scan
-        callback_hog_laser(rospy.wait_for_message('/hog/scan0', LaserScan))
-        callback_mouse_laser(rospy.wait_for_message('mouse/scan0', LaserScan))
 
         # first tf
         br.sendTransform((ret.source_translation.x, ret.source_translation.y, 0),
@@ -182,6 +179,11 @@ def publish_tf():
                          rospy.Time.now(),
                          "laser_mouse",
                          "laser_mouse_target")
+
+        # call the laser update to publish the updated laser scan
+        callback_hog_laser(rospy.wait_for_message('/hog/scan0', LaserScan))
+        callback_mouse_laser(rospy.wait_for_message('mouse/scan0', LaserScan))
+
         rate.sleep()
 
 if __name__ == '__main__':
