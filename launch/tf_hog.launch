@@ -1,0 +1,7 @@
+<launch>
+  <group ns="hog">
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 map laser_hog" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link10_braodcaster" args="0 0 0 0 0 0 1 map bg_cloud" />
+ </group>
+</launch>
+
