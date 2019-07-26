@@ -50,44 +50,90 @@ time_snake = 0
 time_duck = 0
 
 margin = float(sys.argv[1])
+max_time = 0.0
 
 laser_pub_hog, laser_pub_mouse, laser_pub_snake = [], [], []
 
 def callback_hog_laser(data):
-    global lastLaser_hog, laser_pub_hog, time_hog
+    global lastLaser_hog, laser_pub_hog, time_hog, max_time
     time_hog = float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("hog  : " + str(time_hog))
-    # laser_pub_hog.publish(data)
+
+    # max_time = time_hog
+    if max_time - margin <= time_hog <= max_time + margin:
+        laser_pub_hog.publish(data)
+        print("hog  : " + str(time_hog))
+        lastLaser_hog = data
+    else:
+        try:
+            laser_pub_hog.publish(lastLaser_hog)
+            print("hog")
+        except:
+            print("hog hog")
 
 def callback_mouse_laser(data):
-    global lastLaser_mouse, laser_pub_mouse, time_mouse
+    global lastLaser_mouse, laser_pub_mouse, time_mouse, max_time
     time_mouse =  float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("mouse: " + str(time_mouse))
-    # laser_pub_mouse.publish(data)
+
+    if max_time - margin <= time_mouse <= max_time + margin:
+        print("mouse: " + str(time_mouse))
+        lastLaser_mouse = data
+        laser_pub_mouse.publish(data)
+    else:
+        try:
+            laser_pub_mouse.publish(lastLaser_mouse)
+            print("mouse")
+        except:
+            print("mouse mouse")
 
 def callback_snake_laser(data):
-    global lastLaser_snake, laser_pub_snake, time_snake
+    global lastLaser_snake, laser_pub_snake, time_snake, max_time
     time_snake =  float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("snake: " + str(time_snake))
-    # laser_pub_snake.publish(data)
+
+    if max_time - margin <= time_snake <= max_time + margin:
+        laser_pub_snake.publish(data)
+        print("snake: " + str(time_snake))
+        lastLaser_snake = data
+    else:
+        try:
+            laser_pub_snake.publish(laser_pub_snake)
+            print("snake")
+        except:
+            print("snake snake")
+
 
 def callback_hog_laser_publish(data):
-    global lastLaser_hog, laser_pub_hog, time_hog
+    global lastLaser_hog, laser_pub_hog, time_hog, max_time
     time_hog = float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("hog publish  : " + str(time_hog))
+
+    # if max_time - margin <= time_hog <= max_time + margin:
     laser_pub_hog.publish(data)
+    print("hog publish  : " + str(time_hog))
+
+    lastLaser_hog = data
+
 
 def callback_mouse_laser_publish(data):
-    global lastLaser_mouse, laser_pub_mouse, time_mouse
+    global lastLaser_mouse, laser_pub_mouse, time_mouse, max_time
     time_mouse =  float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("mouse publish: " + str(time_mouse))
+
+    # if max_time - margin <= time_mouse <= max_time + margin:
     laser_pub_mouse.publish(data)
+    print("mouse publish: " + str(time_mouse))
+
+    lastLaser_mouse = data
+
+
 
 def callback_snake_laser_publish(data):
-    global lastLaser_snake, laser_pub_snake, time_snake
+    global lastLaser_snake, laser_pub_snake, time_snake, max_time
     time_snake =  float(str(data.header.stamp.secs) + "." + str(data.header.stamp.nsecs))
-    print("snake publish: " + str(time_snake))
+
+    # if max_time - margin <= time_snake <= max_time + margin:
     laser_pub_snake.publish(data)
+    print("snake publish: " + str(time_snake))
+
+    lastLaser_snake = data
+
 
 # def callback_duck_laser(data):
 #     global lastLaser_duck, laser_pub_duck, time_duck
@@ -108,7 +154,7 @@ def callback_all(hog, mouse, snake):
 
 
 def sync_time():
-    global laser_pub_hog, laser_pub_mouse, laser_pub_snake, time_mouse, time_snake, time_hog, margin
+    global laser_pub_hog, laser_pub_mouse, laser_pub_snake, time_mouse, time_snake, time_hog, margin, max_time
 
     rospy.init_node('time_syncronizer')
 
@@ -152,6 +198,10 @@ def sync_time():
     print(time_mouse)
     print(time_snake)
     frames = 0
+
+    # ts = message_filters.ApproximateTimeSynchronizer([laser_sub_hog, laser_sub_mouse, laser_sub_snake],
+    #                                                  1, 1)
+
     while not rospy.is_shutdown():
         # ts.registerCallback(callback_all)
 
@@ -189,7 +239,6 @@ def sync_time():
         callback_mouse_laser_publish(rospy.wait_for_message('/mouse/scan0', LaserScan))
         callback_snake_laser_publish(rospy.wait_for_message('/snake/scan0', LaserScan))
 
-        print("total frames: " + str(frames))
         print("****************************************************************")
         # callback_duck_laser(rospy.wait_for_message('/duck/scan0', LaserScan))
 

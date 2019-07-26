@@ -32,7 +32,7 @@ cameraOutSize = (1280, 720)
 camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
-show_time = 0
+show_time = 10
 ind_list = []
 r = float(sys.argv[4])
 center = (0, 0)
@@ -488,7 +488,7 @@ def showCircles():
                             testMarks.markers[-1].type = Marker.SPHERE
                             testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, .01)
                             testMarks.markers[-1].action = 0
-                            testMarks.markers[-1].color = ColorRGBA(1, 1, 0, .25)
+                            testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                             testMarks.markers[-1].ns = "circles"
                             id += 1  # keep the ids unique
