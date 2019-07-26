@@ -32,7 +32,7 @@ cameraOutSize = (1280, 720)
 camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
-show_time = 1
+show_time = 0
 ind_list = []
 r = float(sys.argv[4])
 center = (0, 0)
@@ -355,9 +355,9 @@ def showCircles():
                             Quaternion(0, 0, 0, 1))
 
                         testMarks.markers[-1].type = Marker.SPHERE
-                        testMarks.markers[-1].scale = Vector3(.005, .005, .01)
+                        testMarks.markers[-1].scale = Vector3(.001, .001, 0)
                         testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(.2, .9, .9, 1)
+                        testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                         testMarks.markers[-1].ns = "midpoints"
                         id += 1  # keep the ids unique
@@ -426,7 +426,7 @@ def showCircles():
                     testMarks.markers[-1].type = Marker.SPHERE
                     testMarks.markers[-1].scale = Vector3(2 * r + within_margin, 2 * r + within_margin, .01)
                     testMarks.markers[-1].action = 0
-                    testMarks.markers[-1].color = ColorRGBA(.0, .9, .0, .1)
+                    testMarks.markers[-1].color = ColorRGBA(1, 1, 1, 1)
                     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                     testMarks.markers[-1].ns = "margin"
                     id += 1  # keep the ids unique
@@ -488,7 +488,7 @@ def showCircles():
                             testMarks.markers[-1].type = Marker.SPHERE
                             testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, .01)
                             testMarks.markers[-1].action = 0
-                            testMarks.markers[-1].color = ColorRGBA(.0, .8, .27, .1)
+                            testMarks.markers[-1].color = ColorRGBA(1, 1, 0, .25)
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                             testMarks.markers[-1].ns = "circles"
                             id += 1  # keep the ids unique
@@ -688,11 +688,11 @@ def triangle_finder():
 
             # determines the color of each leg
             if leg_num == 1:
-                leg_color = ColorRGBA(.3, .7, .6, 1)
+                leg_color = ColorRGBA(.3, 1, 1, 1)
             elif leg_num == 2:
-                leg_color = ColorRGBA(.6, .1, .5, 1)
+                leg_color = ColorRGBA(.3, 1, 1, 1)
             else:
-                leg_color = ColorRGBA(.8, .8, .7, 1)
+                leg_color = ColorRGBA(.3, 1, 1, 1)
 
             leg_num += 1
 
@@ -705,7 +705,7 @@ def triangle_finder():
             # determining how long the markers will stay up in Rviz
             testMarks.markers[-1].lifetime = rospy.Duration(show_time)
             testMarks.markers[-1].type = Marker.LINE_STRIP
-            testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+            testMarks.markers[-1].scale = Vector3(.05, .05, .01)
             testMarks.markers[-1].action = 0
             testMarks.markers[-1].color = leg_color
             testMarks.markers[-1].points = [Point(line_points[0][0], line_points[0][1], 0),
