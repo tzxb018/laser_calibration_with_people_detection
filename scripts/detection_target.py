@@ -25,7 +25,7 @@ center_index = 0
 center_angle = 0
 rate = .2
 error = 0.001
-circle_threshold = 10
+circle_threshold = 8
 center_points = []  # stores the centers of each detected circle
 possible_triangle = [] # stores the point that make up the calibration target
 laserSettings = {}
@@ -33,24 +33,25 @@ max_range = 25.0
 pc_li = PointCloud()
 pc_display = PointCloud()
 laser_pub = []
-isFinshed = True
+# isFinshed = True
 laser_in = LaserScan()
 send_matrix = []
 laser_topic_name = ""
 max_count = 10
-min_dist = .5
+min_dist = .25
+timeout_time = rospy.Duration(10.0)
 
 def detection_target(req):
-    global laser_in, pc_li, pc_display, max_count
+    global laser_in, pc_li, pc_display, max_count, timeout_time
+    print(req.laser_topic)
     a = 0
-
     while True:
         a += 1
         # getting the input laser scan for the service
-        # print(req)
+        print("waiting for rospy message from " + str(req.laser_topic) + "...")
         laser_in = rospy.wait_for_message(req.laser_topic, LaserScan)
+        print("retrived rospy message from " + str(req.laser_topic))
 
-        # laser_in = req.laser_in
 
         # print(laser_in)
         # converting the laser scan into a point cloud for easier calculations
@@ -161,10 +162,10 @@ def update_center(points):
             new_center = (new_center[0] - rate * gradient[0], new_center[1] - rate * gradient[1])
             grad_center_arr.append(new_center)
 
-        isFinshed = True
+        # isFinshed = True
         return new_center, grad_center_arr
     else:
-        isFinshed = True
+        # isFinshed = True
         return
 
 
@@ -207,20 +208,20 @@ def make_PC_from_Laser_display(laser_in):
 
 def updateLaser(data):
     global lastLaser, pc_li, isFinshed, pc_display, laser_pub
+    #
+    # if isFinshed:
+    lastLaser = copy.deepcopy(data)
+    if "angle_increment" not in laserSettings:
+        laserSettings["angle_min"] = data.angle_min
+        laserSettings["angle_max"] = data.angle_max
+        laserSettings["array_size"] = len(data.ranges)
+        laserSettings["angle_increment"] = data.angle_increment
+        laserSettings["range_min"] = data.range_min
+        laserSettings["range_max"] = data.range_max
 
-    if isFinshed:
-        lastLaser = copy.deepcopy(data)
-        if "angle_increment" not in laserSettings:
-            laserSettings["angle_min"] = data.angle_min
-            laserSettings["angle_max"] = data.angle_max
-            laserSettings["array_size"] = len(data.ranges)
-            laserSettings["angle_increment"] = data.angle_increment
-            laserSettings["range_min"] = data.range_min
-            laserSettings["range_max"] = data.range_max
-
-        pc_li = make_PC_from_Laser(data)
-        pc_display = make_PC_from_Laser_display(data)
-
+    pc_li = make_PC_from_Laser(data)
+    pc_display = make_PC_from_Laser_display(data)
+    print(data.header.stamp)
     lastLaser.header.stamp = rospy.Time.now()
     # laser_pub.publish(lastLaser)
 
@@ -246,7 +247,7 @@ def showCircles():
     # if there is a laser scan being read in
     if lastLaser:
 
-        isFinshed = False
+        # isFinshed = False
         center_points = []
         # convert the new laser scan into a point cloud
         # pcloud = make_PC_from_Laser(lastLaser)
@@ -516,7 +517,7 @@ def showCircles():
         # Finds the calibration triangle using the circles detected before
         out = triangle_finder()
 
-        isFinshed = True
+        # isFinshed = True
         return out
 
 # finds the triangle made by three circles
