@@ -211,6 +211,8 @@ def updateLaser(data):
     #
     # if isFinshed:
     lastLaser = copy.deepcopy(data)
+
+    print(data)
     if "angle_increment" not in laserSettings:
         laserSettings["angle_min"] = data.angle_min
         laserSettings["angle_max"] = data.angle_max

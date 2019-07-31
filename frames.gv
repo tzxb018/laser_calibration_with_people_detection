@@ -1,9 +1,0 @@
-digraph G {
-"laser_hog" -> "laser_hog_target"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 20.403 Hz\nMost recent transform: 1563819107.222 ( 0.048 sec old)\nBuffer length: 4.901 sec\n"];
-"map" -> "laser_hog"[label="Broadcaster: /hog/link1_broadcaster\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1563819107.270 sec old)\nBuffer length: 0.000 sec\n"];
-"laser_hog_target" -> "laser_mouse_target"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 10.204 Hz\nMost recent transform: 1563819107.221 ( 0.049 sec old)\nBuffer length: 4.900 sec\n"];
-"laser_mouse_target" -> "laser_mouse"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 10.204 Hz\nMost recent transform: 1563819107.221 ( 0.048 sec old)\nBuffer length: 4.900 sec\n"];
-"laser_snake" -> "map"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 20.404 Hz\nMost recent transform: 1563819107.223 ( 0.047 sec old)\nBuffer length: 4.901 sec\n"];
-"laser_hog_target" -> "laser_snake_target"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 10.205 Hz\nMost recent transform: 1563819107.222 ( 0.047 sec old)\nBuffer length: 4.900 sec\n"];
-"laser_snake_target" -> "laser_snake"[label="Broadcaster: /laser_tf_broadcaster\nAverage rate: 10.205 Hz\nMost recent transform: 1563819107.223 ( 0.047 sec old)\nBuffer length: 4.900 sec\n"];
-}

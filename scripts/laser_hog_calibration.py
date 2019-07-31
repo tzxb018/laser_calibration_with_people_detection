@@ -32,13 +32,13 @@ cameraOutSize = (1280, 720)
 camPixPerDeg = 16.5
 tfDist_cam_laser = 0.0
 tfWait = 3
-show_time = 10
+show_time = 1
 ind_list = []
 r = float(sys.argv[4])
 center = (0, 0)
 center_index = 0
 center_angle = 0
-rate = .2
+rate = .5
 error = 0.001
 circle_threshold = 10
 center_points = []  # stores the centers of each detected circle
@@ -343,21 +343,21 @@ def showCircles():
 
                         # find the tf of the laser to the parent map
                         # this tf will be used to translate the circles to match the laser's map
-                        try:
-                            (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
-                        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                            continue
+                        # try:
+                        #     (trans, rot) = tf_listen.lookupTransform('/map', '/laser_hog', rospy.Time(0))
+                        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                        #     continue
 
                         # postioning will be relative to the tf of the laser
                         testMarks.markers[-1].pose = Pose(
                             # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                            Point(mp[0], mp[1], 0),
+                            Point(mp[0], mp[1], 0.5),
                             Quaternion(0, 0, 0, 1))
 
                         testMarks.markers[-1].type = Marker.SPHERE
-                        testMarks.markers[-1].scale = Vector3(.001, .001, 0)
+                        testMarks.markers[-1].scale = Vector3(.005, .005, .01)
                         testMarks.markers[-1].action = 0
-                        testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
+                        testMarks.markers[-1].color = ColorRGBA(.33, 0, 1, 1)
                         testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                         testMarks.markers[-1].ns = "midpoints"
                         id += 1  # keep the ids unique
@@ -368,14 +368,14 @@ def showCircles():
 
                     testMarks.markers[-1].pose = Pose(
                         # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                        Point(midPointArr1[-1][0], midPointArr1[-1][1], 0),
+                        Point(midPointArr1[-1][0], midPointArr1[-1][1], 0.5),
                         Quaternion(0, 0, 0, 1))
                     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
                     testMarks.markers[-1].type = Marker.SPHERE
-                    testMarks.markers[-1].scale = Vector3(.01, .01, .01)
+                    testMarks.markers[-1].scale = Vector3(.008, .008, .01)
                     testMarks.markers[-1].action = 0
-                    testMarks.markers[-1].color = ColorRGBA(0, .9, .5, 1)
+                    testMarks.markers[-1].color = ColorRGBA(.4, 0, .9, 1)
                     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                     testMarks.markers[-1].ns = "last_midpoint"
                     id += 1  # keep the ids unique
@@ -424,7 +424,7 @@ def showCircles():
                         Quaternion(0, 0, 0, 1))
 
                     testMarks.markers[-1].type = Marker.SPHERE
-                    testMarks.markers[-1].scale = Vector3(2 * r + within_margin, 2 * r + within_margin, .01)
+                    testMarks.markers[-1].scale = Vector3(2 * r + within_margin, 2 * r + within_margin, .5)
                     testMarks.markers[-1].action = 0
                     testMarks.markers[-1].color = ColorRGBA(1, 1, 1, 1)
                     testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
@@ -486,7 +486,7 @@ def showCircles():
                                 Quaternion(0, 0, 0, 1))
 
                             testMarks.markers[-1].type = Marker.SPHERE
-                            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, .01)
+                            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
                             testMarks.markers[-1].action = 0
                             testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
                             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
@@ -508,15 +508,37 @@ def showCircles():
                                 # postioning will be relative to the tf of the laser
                                 testMarks.markers[-1].pose = Pose(
                                     # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                                    Point(pt[0], pt[1], 0),
+                                    Point(pt[0], pt[1], 0.5),
                                     Quaternion(0, 0, 0, 1))
                                 testMarks.markers[-1].type = Marker.SPHERE
                                 testMarks.markers[-1].scale = Vector3(.005, .005, .01)
                                 testMarks.markers[-1].action = 0
-                                testMarks.markers[-1].color = ColorRGBA(.8, .6, .6, 1)
+                                testMarks.markers[-1].color = ColorRGBA(.3, .5, 1, 1)
                                 testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
                                 testMarks.markers[-1].ns = "grad_descent"
                                 id += 1  # keep the ids unique
+
+                            # add a new marker to the marker array
+                            testMarks.markers.append(Marker())
+
+                            # keep the marker ids unique
+                            testMarks.markers[-1].id = id
+
+                            # determining how long the markers will stay up in Rviz
+                            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+                            # postioning will be relative to the tf of the laser
+                            testMarks.markers[-1].pose = Pose(
+                                # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                                Point(grad_center_arr1[-1][0], grad_center_arr1[-1][1], 0.5),
+                                Quaternion(0, 0, 0, 1))
+                            testMarks.markers[-1].type = Marker.SPHERE
+                            testMarks.markers[-1].scale = Vector3(.008, .008, .01)
+                            testMarks.markers[-1].action = 0
+                            testMarks.markers[-1].color = ColorRGBA(.2, .5, .9, 1)
+                            testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
+                            testMarks.markers[-1].ns = "grad_descent"
+                            id += 1  # keep the ids unique
 
                 group_index += 1
 
