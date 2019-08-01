@@ -25,8 +25,12 @@ laser_in = LaserScan()
 old_data_hog = []
 old_data_snake = []
 old_data_mouse = []
-change_in_time = .5
+change_in_time = .02
 max_range = 25.0
+pc_li_hog_all = PointCloud()
+pc_li_snake_all = PointCloud()
+pc_li_mouse_all = PointCloud()
+pc_display_all = PointCloud()
 
 
 def callback_hog_laser_init(data):
@@ -34,7 +38,7 @@ def callback_hog_laser_init(data):
     pc_li_hog = make_PC_from_Laser_display(data)
 
 def callback_hog_laser(data):
-    global pc_li_hog, old_data_hog
+    global pc_li_hog, old_data_hog, pc_li_hog_all
 
     points_to_be_converted = []
     print("hog")
@@ -55,9 +59,10 @@ def callback_hog_laser(data):
     change_hog = copy.deepcopy(data)
     change_hog.ranges = points_to_be_converted
     pc_li_hog = make_PC_from_Laser_display(change_hog)
+    pc_li_hog_all = make_PC_from_Laser_display(data)
 
 def callback_mouse_laser(data):
-    global pc_li_mouse, old_data_mouse
+    global pc_li_mouse, old_data_mouse, pc_li_mouse_all
 
     points_to_be_converted = []
     print("mouse")
@@ -78,9 +83,11 @@ def callback_mouse_laser(data):
     change_mouse = copy.deepcopy(data)
     change_mouse.ranges = points_to_be_converted
     pc_li_mouse = make_PC_from_Laser_display(change_mouse)
+    pc_li_mouse_all = make_PC_from_Laser_display(data)
+
 
 def callback_snake_laser(data):
-    global pc_li_snake, old_data_snake
+    global pc_li_snake, old_data_snake, pc_li_snake_all
 
     points_to_be_converted = []
     print("snake")
@@ -102,6 +109,8 @@ def callback_snake_laser(data):
     change_snake = copy.deepcopy(data)
     change_snake.ranges = points_to_be_converted
     pc_li_snake = make_PC_from_Laser_display(change_snake)
+    pc_li_snake_all = make_PC_from_Laser_display(data)
+
 
 def make_PC_from_Laser_display(laser_in):
 
@@ -128,7 +137,8 @@ def make_PC_from_Laser_display(laser_in):
 def combine_lasers():
     global pc_li_hog, pc_display, pc_li_mouse, pc_li_snake
 
-    bg_pub = rospy.Publisher('/combined', PointCloud, queue_size=10)
+    bg_pub = rospy.Publisher('/combined_movement', PointCloud, queue_size=10)
+    bg_pub_all = rospy.Publisher('/combined', PointCloud, queue_size=10)
     tf_listen = tf.TransformListener(True)
     tf_transformer = tf.TransformerROS()
 
@@ -158,6 +168,7 @@ def combine_lasers():
         callback_mouse_laser(rospy.wait_for_message('/mouse/scan0', LaserScan))
         callback_snake_laser(rospy.wait_for_message('/snake/scan0', LaserScan))
         pc_display = PointCloud()
+        pc_display_all = PointCloud()
 
         p1 = PointStamped()
         p1.header = copy.deepcopy(pc_li_hog.header)
@@ -167,6 +178,12 @@ def combine_lasers():
             p1.point.y = pt.y
 
             pc_display.points.append(Point(p1.point.x, p1.point.y, p1.point.z))
+
+        for pt in pc_li_hog_all.points:
+            p1.point.x = pt.x
+            p1.point.y = pt.y
+
+            pc_display_all.points.append(Point(p1.point.x, p1.point.y, p1.point.z))
 
         p1.header.frame_id = "/laser_snake"
 
@@ -181,6 +198,15 @@ def combine_lasers():
 
             pc_display.points.append(Point(out1[0], out1[1], out1[2]))
 
+        for pt in pc_li_snake_all.points:
+            num_point[0] = pt.x
+            num_point[1] = pt.y
+            num_point[2] = pt.z
+
+            out1 = numpy.dot(snake_matrix, num_point)
+
+            pc_display_all.points.append(Point(out1[0], out1[1], out1[2]))
+
         for pt in pc_li_mouse.points:
             num_point[0] = pt.x
             num_point[1] = pt.y
@@ -190,10 +216,23 @@ def combine_lasers():
 
             pc_display.points.append(Point(out2[0], out2[1], out2[2]))
 
+        for pt in pc_li_mouse_all.points:
+            num_point[0] = pt.x
+            num_point[1] = pt.y
+            num_point[2] = pt.z
+
+            out2 = numpy.dot(mouse_matrix, num_point)
+
+            pc_display_all.points.append(Point(out2[0], out2[1], out2[2]))
+
         pc_display.header = copy.deepcopy(pc_li_hog.header)
         pc_display.header.frame_id = "map"
 
+        pc_display_all.header = copy.deepcopy(pc_li_hog.header)
+        pc_display_all.header.frame_id = "map"
+        print(len(pc_display_all.points))
         bg_pub.publish(pc_display)
+        bg_pub_all.publish(pc_display_all)
         # print(pc_display)
         print(len(pc_display.points))
         print("==================================================================")
