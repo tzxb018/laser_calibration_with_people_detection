@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/scripts/people_detection.py" line="217" />
+    <bookmark url="file://$PROJECT_DIR$/scripts/people_detection.py" line="347" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5755c49-21c1-4353-991f-29616ef6e58d" name="Default" comment="">
@@ -39,7 +39,6 @@
               <caret line="27" column="20" lean-forward="false" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
               <folding>
                 <element signature="e#22#34#0" expanded="true" />
-                <element signature="e#3461#4173#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -76,9 +75,11 @@
       <find>tf</find>
       <find>+</find>
       <find>print</find>
+      <find>mouse</find>
     </findStrings>
     <replaceStrings>
       <replace>time_hog</replace>
+      <replace>snake</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -363,7 +364,6 @@
           <caret line="27" column="20" lean-forward="false" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
-            <element signature="e#3461#4173#0" expanded="false" />
           </folding>
         </state>
       </provider>
