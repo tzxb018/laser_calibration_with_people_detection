@@ -29,7 +29,7 @@ laser_in = LaserScan()
 old_data_hog1, old_data_hog2, old_data_hog3, old_data_hog4 = [], [], [], []
 old_data_snake1, old_data_snake2, old_data_snake3, old_data_snake4 = [], [], [], []
 old_data_mouse1, old_data_mouse2, old_data_mouse3, old_data_mouse4 = [], [], [], []
-change_in_time = .05
+min_variance = .05
 max_range = 25.0
 rate = .1
 circle_threshold = 12
@@ -38,7 +38,7 @@ rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, r
 show_time = 1
 r = .07
 queue_size = 15
-within_margin = .08
+within_margin = .03
 location_history = deque()
 last_time_stamp = 0
 
@@ -80,7 +80,7 @@ def callback_hog_laser(data):
 
             # if the variance exists and is greater than a threshold, add the point to another array
             # this determines if the point is part of a moving object or not
-            if not math.isnan(variance_between_points) and variance_between_points >= change_in_time:
+            if not math.isnan(variance_between_points) and variance_between_points >= min_variance:
                 points_to_be_converted.append(data.ranges[i])
             else:
 
@@ -94,7 +94,10 @@ def callback_hog_laser(data):
         old_data_hog2 = data
         old_data_hog3 = data
         old_data_hog4 = data
-        points_to_be_converted = data.ranges
+
+        # making sure that the first iteration results in no movement detected
+        for i in range(0, len(data.ranges)):
+            points_to_be_converted.append(numpy.inf)
 
     # slide the histories of the laser scan one more array down (keeps the 5 most recent laser scans)
     old_data_hog4 = old_data_hog3
@@ -149,7 +152,7 @@ def callback_mouse_laser(data):
 
             # if the variance exists and is greater than a threshold, add the point to another array
             # this determines if the point is part of a moving object or not
-            if not math.isnan(variance_between_points) and variance_between_points >= change_in_time:
+            if not math.isnan(variance_between_points) and variance_between_points >= min_variance:
                 points_to_be_converted.append(data.ranges[i])
             else:
 
@@ -163,7 +166,10 @@ def callback_mouse_laser(data):
         old_data_mouse2 = data
         old_data_mouse3 = data
         old_data_mouse4 = data
-        points_to_be_converted = data.ranges
+
+        # making sure that the first iteration results in no movement detected
+        for i in range(0, len(data.ranges)):
+            points_to_be_converted.append(numpy.inf)
 
     # slide the histories of the laser scan one more array down (keeps the 5 most recent laser scans)
     old_data_mouse4 = old_data_mouse3
@@ -218,7 +224,7 @@ def callback_snake_laser(data):
 
             # if the variance exists and is greater than a threshold, add the point to another array
             # this determines if the point is part of a moving object or not
-            if not math.isnan(variance_between_points) and variance_between_points >= change_in_time:
+            if not math.isnan(variance_between_points) and variance_between_points >= min_variance:
                 points_to_be_converted.append(data.ranges[i])
             else:
 
@@ -232,7 +238,10 @@ def callback_snake_laser(data):
         old_data_snake2 = data
         old_data_snake3 = data
         old_data_snake4 = data
-        points_to_be_converted = data.ranges
+        
+        # making sure that the first iteration results in no movement detected
+        for i in range(0, len(data.ranges)):
+            points_to_be_converted.append(numpy.inf)
 
     # slide the histories of the laser scan one more array down (keeps the 5 most recent laser scans)
     old_data_snake4 = old_data_snake3
