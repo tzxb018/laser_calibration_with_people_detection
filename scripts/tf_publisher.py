@@ -61,7 +61,7 @@ pc_display = PointCloud()
 def callback_hog_laser(data):
     global lastLaser_hog, laser_pub_hog, time_hog, pc_li_hog
     time_hog = data.header.stamp
-    print("hog  : " + str(data.header.stamp.nsecs))
+    # print("hog  : " + str(data.header.stamp.nsecs))
     pc_li_hog = make_PC_from_Laser_display(data)
 
 
@@ -69,7 +69,7 @@ def callback_mouse_laser(data):
     global lastLaser_mouse, laser_pub_mouse, time_mouse, pc_li_mouse
 
     time_mouse = data.header.stamp
-    print("mouse: " + str(data.header.stamp.nsecs))
+    # print("mouse: " + str(data.header.stamp.nsecs))
     pc_li_mouse = make_PC_from_Laser_display(data)
 
 
@@ -77,7 +77,7 @@ def callback_snake_laser(data):
     global lastLaser_snake, laser_pub_snake, time_snake, pc_li_snake
 
     time_snake = data.header.stamp
-    print("snake: " + str(data.header.stamp.nsecs))
+    # print("snake: " + str(data.header.stamp.nsecs))
     pc_li_snake = make_PC_from_Laser_display(data)
 
 
@@ -90,11 +90,11 @@ def callback_all(hog, mouse, snake):
     global lastLaser_duck, lastLaser_mouse, lastLaser_hog, lastLaser_snake, laser_pub
     global pc_li_hog, pc_li_mouse, pc_li_snake, pc_display
 
-    print("sync*****")
-    print("running lasers hog   " + str(hog.header.stamp.nsecs))
-    print("running lasers snake " + str(snake.header.stamp.nsecs))
-    print("running lasers mouse " + str(mouse.header.stamp.nsecs))
-    print("sync*****")
+    # print("sync*****")
+    # print("running lasers hog   " + str(hog.header.stamp.nsecs))
+    # print("running lasers snake " + str(snake.header.stamp.nsecs))
+    # print("running lasers mouse " + str(mouse.header.stamp.nsecs))
+    # print("sync*****")
 
     # pc_li_hog = make_PC_from_Laser_display(hog)
     # pc_li_mouse = make_PC_from_Laser_display(mouse)
