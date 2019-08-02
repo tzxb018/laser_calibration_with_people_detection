@@ -36,20 +36,24 @@ rate = .1
 circle_threshold = 12
 # rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
 #               range(0, 200)]
-show_time = 1
+show_time = 5
 r = .07
 queue_size = 15
-within_margin = .03
+within_margin = .02
 location_history = deque()
 location_history_time = deque()
 last_time_stamp = 0
-linear_step = 5.0 # step is actually divided by 10 (used in a for loop) (10 / linear_step) will equal seconds in the future
+linear_step = 10.0 # step is actually divided by 10 (used in a for loop) (10 / linear_step) will equal seconds in the future
 linear_size = 10
 degree = 3
 poly_step = 10.0 # step is actually divided by 10 (used in a for loop)
 poly_size = 10
 ankles_found = [] # actual path
 linear_history = [] # predicted path with linear modeling
+orange = ColorRGBA(1, .33, 0, 1)
+purple = ColorRGBA(.33, 0, 1, 1)
+blue = ColorRGBA(0, 0, 1, 1)
+cyan = ColorRGBA(.3, 1, 1, 1)
 
 def callback_hog_laser_init(data):
     global pc_li_hog
@@ -817,7 +821,7 @@ def showCircles():
         testMarks.markers[-1].type = Marker.SPHERE
         testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
         testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
+        testMarks.markers[-1].color = cyan
         testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
         testMarks.markers[-1].ns = "ankles_queue"
         id += 1  # keep the ids unique
@@ -842,7 +846,30 @@ def showCircles():
         testMarks.markers[-1].type = Marker.SPHERE
         testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
         testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(1, 0, 1, 1)
+        testMarks.markers[-1].color = cyan
+        testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "ankles"
+        id += 1  # keep the ids unique
+
+    # printing the arrows for the recorded path
+    for i in range(1, len(ankles_found) - 1):
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
+
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+        # postioning will be relative to the tf of the laser
+        testMarks.markers[-1].points = [Point(ankles_found[i-1].x, ankles_found[i-1].y, 0),
+                                        Point(ankles_found[i].x, ankles_found[i].y, 0)]
+
+        testMarks.markers[-1].type = Marker.ARROW
+        testMarks.markers[-1].scale = Vector3(.1, .15, .3)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = cyan
         testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
         testMarks.markers[-1].ns = "ankles"
         id += 1  # keep the ids unique
@@ -873,12 +900,12 @@ def showCircles():
             testMarks.markers[-1].type = Marker.SPHERE
             testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
             testMarks.markers[-1].action = 0
-            testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+            testMarks.markers[-1].color = orange
             testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
             testMarks.markers[-1].ns = "predicted_path_linear"
             id += 1  # keep the ids unique
-        # printing the linear fit model based on the previous ankle marks
-        for lin in linear_fit_arr:
+
+        for i in range(1, len(linear_history) - 1):
             # add a new marker to the marker array
             testMarks.markers.append(Marker())
 
@@ -889,18 +916,40 @@ def showCircles():
             testMarks.markers[-1].lifetime = rospy.Duration(show_time)
 
             # postioning will be relative to the tf of the laser
-            testMarks.markers[-1].pose = Pose(
-                # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
-                Point(lin.x, lin.y, 0),
-                Quaternion(0, 0, 0, 1))
+            testMarks.markers[-1].points = [Point(linear_history[i - 1].x, linear_history[i - 1].y, 0),
+                                            Point(linear_history[i].x, linear_history[i].y, 0)]
 
-            testMarks.markers[-1].type = Marker.SPHERE
-            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+            testMarks.markers[-1].type = Marker.ARROW
+            testMarks.markers[-1].scale = Vector3(.1, .15, .3)
             testMarks.markers[-1].action = 0
-            testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+            testMarks.markers[-1].color = orange
             testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
-            testMarks.markers[-1].ns = "linear_fit_magnitude"
+            testMarks.markers[-1].ns = "predicted_path_linear"
             id += 1  # keep the ids unique
+        # printing a magnitude of the predicted points
+        # for lin in linear_fit_arr:
+        #     # add a new marker to the marker array
+        #     testMarks.markers.append(Marker())
+        #
+        #     # keep the marker ids unique
+        #     testMarks.markers[-1].id = id
+        #
+        #     # determining how long the markers will stay up in Rviz
+        #     testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+        #
+        #     # postioning will be relative to the tf of the laser
+        #     testMarks.markers[-1].pose = Pose(
+        #         # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+        #         Point(lin.x, lin.y, 0),
+        #         Quaternion(0, 0, 0, 1))
+        #
+        #     testMarks.markers[-1].type = Marker.SPHERE
+        #     testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+        #     testMarks.markers[-1].action = 0
+        #     testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+        #     testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+        #     testMarks.markers[-1].ns = "linear_fit_magnitude"
+        #     id += 1  # keep the ids unique
 
         # adding an arrow on rviz for the linear regression model
         # add a new marker to the marker array
@@ -919,7 +968,7 @@ def showCircles():
         testMarks.markers[-1].type = Marker.ARROW
         testMarks.markers[-1].scale = Vector3(.1, .15, .3)
         testMarks.markers[-1].action = 0
-        testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+        testMarks.markers[-1].color = orange
         testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
         testMarks.markers[-1].ns = "linear_fit_arrow"
         id += 1  # keep the ids unique
