@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/scripts/people_detection.py" line="371" />
+    <bookmark url="file://$PROJECT_DIR$/scripts/people_detection.py" line="376" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5755c49-21c1-4353-991f-29616ef6e58d" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/linear_regression_test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/linear_regression_test.py" afterPath="$PROJECT_DIR$/scripts/linear_regression_test.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/people_detection.py" afterPath="$PROJECT_DIR$/scripts/people_detection.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -37,25 +36,26 @@
       <file leaf-file-name="people_detection.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/people_detection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="633">
-              <caret line="46" column="17" lean-forward="false" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
+            <state relative-caret-position="441">
+              <caret line="901" column="60" lean-forward="false" selection-start-line="901" selection-start-column="60" selection-end-line="901" selection-end-column="60" />
               <folding>
                 <element signature="e#22#34#0" expanded="true" />
-                <element signature="e#1584#1649#0" expanded="false" />
-                <element signature="e#1686#4671#0" expanded="false" />
-                <element signature="e#4710#7783#0" expanded="false" />
-                <element signature="e#7822#10895#0" expanded="false" />
-                <element signature="e#10945#11657#0" expanded="false" />
-                <element signature="e#11686#15341#0" expanded="false" />
-                <element signature="e#15696#17821#0" expanded="false" />
-                <element signature="e#17865#18032#0" expanded="false" />
-                <element signature="e#18063#18138#0" expanded="false" />
-                <element signature="e#18257#19279#0" expanded="false" />
-                <element signature="e#20886#20944#0" expanded="false" />
-                <element signature="e#22897#22917#0" expanded="false" />
-                <element signature="e#26420#26463#0" expanded="false" />
-                <element signature="e#30020#30033#0" expanded="false" />
-                <marker date="1564763111883" expanded="true" signature="26409:29137" ph="..." />
+                <element signature="e#1855#1920#0" expanded="false" />
+                <element signature="e#1957#4942#0" expanded="false" />
+                <element signature="e#4981#8054#0" expanded="false" />
+                <element signature="e#8093#11166#0" expanded="false" />
+                <element signature="e#11216#11928#0" expanded="false" />
+                <element signature="e#11957#15612#0" expanded="false" />
+                <element signature="e#15967#18092#0" expanded="false" />
+                <element signature="e#18136#18303#0" expanded="false" />
+                <element signature="e#18334#18409#0" expanded="false" />
+                <element signature="e#18528#19550#0" expanded="false" />
+                <element signature="e#21187#21245#0" expanded="false" />
+                <element signature="e#23198#23218#0" expanded="false" />
+                <element signature="e#26721#26764#0" expanded="false" />
+                <element signature="e#30377#30390#0" expanded="false" />
+                <element signature="e#42794#44540#0" expanded="false" />
+                <marker date="1564779139199" expanded="true" signature="26710:29438" ph="..." />
               </folding>
             </state>
           </provider>
@@ -64,10 +64,10 @@
       <file leaf-file-name="linear_regression_test.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/linear_regression_test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="14" column="15" lean-forward="true" selection-start-line="14" selection-start-column="15" selection-end-line="14" selection-end-column="15" />
+            <state relative-caret-position="399">
+              <caret line="37" column="15" lean-forward="true" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
               <folding>
-                <element signature="e#0#49#0" expanded="true" />
+                <element signature="e#986#1001#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -344,7 +344,7 @@
     <frame x="65" y="24" width="1615" height="1026" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2495356" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16532508" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32912722" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -368,7 +368,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="4" />
+      <option name="time" value="5" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -401,35 +401,36 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/linear_regression_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="14" column="15" lean-forward="true" selection-start-line="14" selection-start-column="15" selection-end-line="14" selection-end-column="15" />
+        <state relative-caret-position="399">
+          <caret line="37" column="15" lean-forward="true" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
           <folding>
-            <element signature="e#0#49#0" expanded="true" />
+            <element signature="e#986#1001#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/people_detection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="633">
-          <caret line="46" column="17" lean-forward="false" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
+        <state relative-caret-position="441">
+          <caret line="901" column="60" lean-forward="false" selection-start-line="901" selection-start-column="60" selection-end-line="901" selection-end-column="60" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
-            <element signature="e#1584#1649#0" expanded="false" />
-            <element signature="e#1686#4671#0" expanded="false" />
-            <element signature="e#4710#7783#0" expanded="false" />
-            <element signature="e#7822#10895#0" expanded="false" />
-            <element signature="e#10945#11657#0" expanded="false" />
-            <element signature="e#11686#15341#0" expanded="false" />
-            <element signature="e#15696#17821#0" expanded="false" />
-            <element signature="e#17865#18032#0" expanded="false" />
-            <element signature="e#18063#18138#0" expanded="false" />
-            <element signature="e#18257#19279#0" expanded="false" />
-            <element signature="e#20886#20944#0" expanded="false" />
-            <element signature="e#22897#22917#0" expanded="false" />
-            <element signature="e#26420#26463#0" expanded="false" />
-            <element signature="e#30020#30033#0" expanded="false" />
-            <marker date="1564763111883" expanded="true" signature="26409:29137" ph="..." />
+            <element signature="e#1855#1920#0" expanded="false" />
+            <element signature="e#1957#4942#0" expanded="false" />
+            <element signature="e#4981#8054#0" expanded="false" />
+            <element signature="e#8093#11166#0" expanded="false" />
+            <element signature="e#11216#11928#0" expanded="false" />
+            <element signature="e#11957#15612#0" expanded="false" />
+            <element signature="e#15967#18092#0" expanded="false" />
+            <element signature="e#18136#18303#0" expanded="false" />
+            <element signature="e#18334#18409#0" expanded="false" />
+            <element signature="e#18528#19550#0" expanded="false" />
+            <element signature="e#21187#21245#0" expanded="false" />
+            <element signature="e#23198#23218#0" expanded="false" />
+            <element signature="e#26721#26764#0" expanded="false" />
+            <element signature="e#30377#30390#0" expanded="false" />
+            <element signature="e#42794#44540#0" expanded="false" />
+            <marker date="1564779139199" expanded="true" signature="26710:29438" ph="..." />
           </folding>
         </state>
       </provider>

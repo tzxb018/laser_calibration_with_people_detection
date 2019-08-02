@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 import rospy
-import sys
 import tf
 import copy
-from lc.srv import Detection_target
 import math
-from geometry_msgs.msg import Point
 from sensor_msgs.msg import LaserScan, PointCloud2, PointCloud, ChannelFloat32
 import sensor_msgs.point_cloud2 as pc
 import laser_geometry as lp
@@ -16,6 +13,8 @@ import numpy
 import random
 from collections import deque
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 pc_li_hog = PointCloud()
@@ -35,8 +34,8 @@ min_variance = .05
 max_range = 25.0
 rate = .1
 circle_threshold = 12
-rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
-              range(0, 200)]
+# rand_color = [(random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0, random.randint(0, 254) / 255.0) for a in
+#               range(0, 200)]
 show_time = 1
 r = .07
 queue_size = 15
@@ -44,8 +43,14 @@ within_margin = .03
 location_history = deque()
 location_history_time = deque()
 last_time_stamp = 0
-linear_step = 3.0 # step is actually divided by 10 (used in a for loop)
+linear_step = 5.0 # step is actually divided by 10 (used in a for loop) (10 / linear_step) will equal seconds in the future
 linear_size = 10
+degree = 3
+poly_step = 10.0 # step is actually divided by 10 (used in a for loop)
+poly_size = 10
+ankles_found = [] # actual path
+linear_history = [] # predicted path with linear modeling
+
 def callback_hog_laser_init(data):
     global pc_li_hog
     pc_li_hog = make_PC_from_Laser_display(data)
@@ -505,7 +510,7 @@ def showCircles():
     global ankleMarks
     global ind_list, center, center_index
     global center_points, wthin_margin
-    global pc_display
+    global pc_display, ankles_found, linear_history
     global location_history, last_time_stamp, location_history_time
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
@@ -724,6 +729,7 @@ def showCircles():
                         location_history.append(updated_center)
                         location_history_time.append(last_time_stamp)
 
+                    ankles_found.append(updated_center)
                     # FOR TESTING
                     # Display the grad descent process
                     # for pt in grad_center_arr1:
@@ -776,19 +782,24 @@ def showCircles():
         # iterate to the next laser point available
         center_index += len(ind_list) + 1
 
+    # if the rosbag restarts
     if float(str(pc_display.header.stamp.secs) + "." + str(pc_display.header.stamp.nsecs)) - last_time_stamp < 0.0:
         location_history = deque()
         location_history_time = deque()
+        ankles_found = []
+        linear_history = []
 
+    # update the most current time stamp
     last_time_stamp = float(str(pc_display.header.stamp.secs) + "." + str(pc_display.header.stamp.nsecs))
 
-    linear_fit_arr = []
+    # apply the linear regression model to the latest ankles
     linear_fit_arr = linear_regression(location_history, location_history_time)
+    # poly_fit_arr = polynomial_regression(location_history, location_history_time)
 
-    print(location_history_time)
-    print(location_history)
     # printing each ankle in the queue
     for cir in location_history:
+
+        # prints the ankle queue (most recent ankle pos used to calculate regression)
         # add a new marker to the marker array
         testMarks.markers.append(Marker())
 
@@ -800,7 +811,6 @@ def showCircles():
 
         # postioning will be relative to the tf of the laser
         testMarks.markers[-1].pose = Pose(
-            # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
             Point(cir.x, cir.y, 0),
             Quaternion(0, 0, 0, 1))
 
@@ -809,10 +819,64 @@ def showCircles():
         testMarks.markers[-1].action = 0
         testMarks.markers[-1].color = ColorRGBA(.3, 1, 1, 1)
         testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
-        testMarks.markers[-1].ns = "circles"
+        testMarks.markers[-1].ns = "ankles_queue"
         id += 1  # keep the ids unique
 
+    # printing the ankles tracked during the recording (actual path)
+    for cir in ankles_found:
+        # prints the ankle queue (most recent ankle pos used to calculate regression)
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
+
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+        # postioning will be relative to the tf of the laser
+        testMarks.markers[-1].pose = Pose(
+            Point(cir.x, cir.y, 0),
+            Quaternion(0, 0, 0, 1))
+
+        testMarks.markers[-1].type = Marker.SPHERE
+        testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = ColorRGBA(1, 0, 1, 1)
+        testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "ankles"
+        id += 1  # keep the ids unique
+
+    # applying linear regression model into rviz
     if linear_fit_arr:
+        # adding the predicted point from regression model to the history array
+        # this will keep track of the history of the predicted
+        # used to show predicted path after each time update
+        linear_history.append(linear_fit_arr[-1])
+
+        for predicted_point in linear_history:
+            # add a new marker to the marker array
+            testMarks.markers.append(Marker())
+
+            # keep the marker ids unique
+            testMarks.markers[-1].id = id
+
+            # determining how long the markers will stay up in Rviz
+            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+            # postioning will be relative to the tf of the laser
+            testMarks.markers[-1].pose = Pose(
+                # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                Point(predicted_point.x, predicted_point.y, 0),
+                Quaternion(0, 0, 0, 1))
+
+            testMarks.markers[-1].type = Marker.SPHERE
+            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+            testMarks.markers[-1].action = 0
+            testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+            testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+            testMarks.markers[-1].ns = "predicted_path_linear"
+            id += 1  # keep the ids unique
         # printing the linear fit model based on the previous ankle marks
         for lin in linear_fit_arr:
             # add a new marker to the marker array
@@ -833,15 +897,66 @@ def showCircles():
             testMarks.markers[-1].type = Marker.SPHERE
             testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
             testMarks.markers[-1].action = 0
-            testMarks.markers[-1].color = ColorRGBA(1, 0, 0, 1)
+            testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
             testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
-            testMarks.markers[-1].ns = "linear_fit"
+            testMarks.markers[-1].ns = "linear_fit_magnitude"
             id += 1  # keep the ids unique
+
+        # adding an arrow on rviz for the linear regression model
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
+
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+        # postioning will be relative to the tf of the laser
+        testMarks.markers[-1].points = [Point(linear_fit_arr[0].x, linear_fit_arr[0].y, 0),
+                                        Point(linear_fit_arr[-1].x, linear_fit_arr[-1].y, 0)]
+
+        testMarks.markers[-1].type = Marker.ARROW
+        testMarks.markers[-1].scale = Vector3(.1, .15, .3)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = ColorRGBA(1, .64, 0, 1)
+        testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "linear_fit_arrow"
+        id += 1  # keep the ids unique
+
+
+    # # applying polynomial regression model into rviz
+    # if poly_fit_arr:
+    #     # printing the polynomial model based on previous ankle marks
+    #     for poly in poly_fit_arr:
+    #         # add a new marker to the marker array
+    #         testMarks.markers.append(Marker())
+    #
+    #         # keep the marker ids unique
+    #         testMarks.markers[-1].id = id
+    #
+    #         # determining how long the markers will stay up in Rviz
+    #         testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+    #
+    #         # postioning will be relative to the tf of the laser
+    #         testMarks.markers[-1].pose = Pose(
+    #             # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+    #             Point(poly.x, poly.y, 0),
+    #             Quaternion(0, 0, 0, 1))
+    #
+    #         testMarks.markers[-1].type = Marker.SPHERE
+    #         testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+    #         testMarks.markers[-1].action = 0
+    #         testMarks.markers[-1].color = ColorRGBA(0, 1, 0, 1)
+    #         testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+    #         testMarks.markers[-1].ns = "poly_fit"
+    #         id += 1  # keep the ids unique
 
     # publish the marker array to be displayed on Rviz
     ankleMarkers.publish(testMarks)
 
     print("****************************************************************************")
+
 
 def linear_regression(points_queue, time_queue):
     linear_fit = []
@@ -868,13 +983,16 @@ def linear_regression(points_queue, time_queue):
 
         x_pred = []
         y_pred = []
+        max_time = max(time_queue)
+        # x_pred.append(model_x.intercept_ + model_x.coef_ * (max_time + linear_size/linear_step))
+        # y_pred.append(model_y.intercept_ + model_y.coef_ * (max_time + linear_size/linear_step))
         for extra in range(0,linear_size):
-            x_pred.append(model_x.intercept_ + model_x.coef_ * (max(time_queue) + extra/linear_step))
-            y_pred.append(model_y.intercept_ + model_y.coef_ * (max(time_queue) + extra/linear_step))
-        print('formula x', model_x.intercept_, model_x.coef_)
-        print('formula y', model_y.intercept_, model_y.coef_)
-        print(x_pred)
-        print(y_pred)
+            x_pred.append(model_x.intercept_ + model_x.coef_ * (max_time + extra/linear_step))
+            y_pred.append(model_y.intercept_ + model_y.coef_ * (max_time + extra/linear_step))
+        # print('formula x', model_x.intercept_, model_x.coef_)
+        # print('formula y', model_y.intercept_, model_y.coef_)
+        # print(x_pred)
+        # print(y_pred)
         # print('x', x_pred)
         # print('y', y_pred)
         for i in range(0, linear_size - 1):
@@ -884,6 +1002,56 @@ def linear_regression(points_queue, time_queue):
         # print('before send', linear_fit)
 
     return linear_fit
+
+
+def polynomial_regression(points_queue, time_queue):
+
+    # code from https://towardsdatascience.com/polynomial-regression-bbe8b9d97491
+    poly_fit = []
+    if points_queue and time_queue:
+        pos_x = []
+        pos_y = []
+        time = []
+
+        for pt in points_queue:
+            pos_x.append(pt.x)
+            pos_y.append(pt.y)
+
+        min_time = min(time_queue)
+        for i in range(0, len(time_queue)):
+            time[i] = time_queue[i] - min_time
+
+        for i in range (0, len(points_queue) - 1):
+            print(str(pos_x[i]) + ", " + str(time[i]))
+        pos_x, pos_y, time = numpy.array(pos_x), numpy.array(pos_y), numpy.array(time).reshape((-1, 1))
+
+
+        polynomial_features = PolynomialFeatures(degree=degree)
+        t_poly = polynomial_features.fit_transform(time)
+
+        # polynomial fit for the x coordinates
+        model_x = LinearRegression()
+        model_x.fit(t_poly, pos_x)
+        x_pos_poly_prediction = model_x.predict(t_poly)
+
+        # polynomial fit for the y coordinates
+        model_y = LinearRegression()
+        model_y.fit(t_poly, pos_y)
+        y_pos_poly_prediction = model_y.predict(t_poly)
+
+        # finding the predictions in the future with the model
+        max_time = max(time_queue)
+        # for extra in range (0, poly_size):
+        #     new_point = Point(model_x.predict(polynomial_features.fit_transform(max_time + extra/poly_step)),
+        #                       model_y.predict(polynomial_features.fit_transform(max_time + extra/poly_step)), 0)
+        #     poly_fit.append(new_point)
+        print(x_pos_poly_prediction)
+        for i in range(0, len(x_pos_poly_prediction) - 1):
+            new_point = Point(x_pos_poly_prediction[i], y_pos_poly_prediction[i],0)
+            poly_fit.append(new_point)
+    return poly_fit
+
+
 
 
 
