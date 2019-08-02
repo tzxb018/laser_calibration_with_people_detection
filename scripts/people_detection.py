@@ -15,6 +15,8 @@ from geometry_msgs.msg import Quaternion, Pose, Point, Vector3, PoseStamped, Poi
 import numpy
 import random
 from collections import deque
+from sklearn.linear_model import LinearRegression
+
 
 pc_li_hog = PointCloud()
 pc_li_snake = PointCloud()
@@ -40,8 +42,10 @@ r = .07
 queue_size = 15
 within_margin = .03
 location_history = deque()
+location_history_time = deque()
 last_time_stamp = 0
-
+linear_step = 3.0 # step is actually divided by 10 (used in a for loop)
+linear_size = 10
 def callback_hog_laser_init(data):
     global pc_li_hog
     pc_li_hog = make_PC_from_Laser_display(data)
@@ -238,7 +242,7 @@ def callback_snake_laser(data):
         old_data_snake2 = data
         old_data_snake3 = data
         old_data_snake4 = data
-        
+
         # making sure that the first iteration results in no movement detected
         for i in range(0, len(data.ranges)):
             points_to_be_converted.append(numpy.inf)
@@ -502,7 +506,7 @@ def showCircles():
     global ind_list, center, center_index
     global center_points, wthin_margin
     global pc_display
-    global location_history, last_time_stamp
+    global location_history, last_time_stamp, location_history_time
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     ankleMarkers = rospy.Publisher("/ankles", MarkerArray, queue_size=10)
@@ -713,9 +717,12 @@ def showCircles():
                     # queuing the position of the circle
                     if len(location_history) < queue_size:
                         location_history.append(updated_center)
+                        location_history_time.append(last_time_stamp)
                     else:
                         location_history.popleft()
+                        location_history_time.popleft()
                         location_history.append(updated_center)
+                        location_history_time.append(last_time_stamp)
 
                     # FOR TESTING
                     # Display the grad descent process
@@ -769,10 +776,17 @@ def showCircles():
         # iterate to the next laser point available
         center_index += len(ind_list) + 1
 
-    if int(pc_display.header.stamp.secs) - last_time_stamp < 0:
+    if float(str(pc_display.header.stamp.secs) + "." + str(pc_display.header.stamp.nsecs)) - last_time_stamp < 0.0:
         location_history = deque()
+        location_history_time = deque()
 
-    last_time_stamp = int(pc_display.header.stamp.secs)
+    last_time_stamp = float(str(pc_display.header.stamp.secs) + "." + str(pc_display.header.stamp.nsecs))
+
+    linear_fit_arr = []
+    linear_fit_arr = linear_regression(location_history, location_history_time)
+
+    print(location_history_time)
+    print(location_history)
     # printing each ankle in the queue
     for cir in location_history:
         # add a new marker to the marker array
@@ -798,10 +812,80 @@ def showCircles():
         testMarks.markers[-1].ns = "circles"
         id += 1  # keep the ids unique
 
+    if linear_fit_arr:
+        # printing the linear fit model based on the previous ankle marks
+        for lin in linear_fit_arr:
+            # add a new marker to the marker array
+            testMarks.markers.append(Marker())
+
+            # keep the marker ids unique
+            testMarks.markers[-1].id = id
+
+            # determining how long the markers will stay up in Rviz
+            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
+
+            # postioning will be relative to the tf of the laser
+            testMarks.markers[-1].pose = Pose(
+                # Point(updated_center[0] + trans[0], updated_center[1] + trans[1], 0 + trans[2]),
+                Point(lin.x, lin.y, 0),
+                Quaternion(0, 0, 0, 1))
+
+            testMarks.markers[-1].type = Marker.SPHERE
+            testMarks.markers[-1].scale = Vector3(2 * r, 2 * r, -.02)
+            testMarks.markers[-1].action = 0
+            testMarks.markers[-1].color = ColorRGBA(1, 0, 0, 1)
+            testMarks.markers[-1].header = pc_display.header  # Header(frame_id="/map")
+            testMarks.markers[-1].ns = "linear_fit"
+            id += 1  # keep the ids unique
+
     # publish the marker array to be displayed on Rviz
     ankleMarkers.publish(testMarks)
 
     print("****************************************************************************")
+
+def linear_regression(points_queue, time_queue):
+    linear_fit = []
+    if points_queue and time_queue:
+        pos_x = []
+        pos_y = []
+        time = []
+
+        for pt in points_queue:
+            pos_x.append(pt.x)
+            pos_y.append(pt.y)
+
+        for t in time_queue:
+            time.append(t)
+
+        pos_x, pos_y, time = numpy.array(pos_x), numpy.array(pos_y), numpy.array(time).reshape((-1,1))
+        # pos_x = numpy.array(pos_x).reshape((-1, 1))
+        # pos_y = numpy.array(pos_y).reshape((-1, 1))
+        # time = numpy.array(time).reshape((-1,1))
+        # print(pos_x, pos_y, time)
+
+        model_x = LinearRegression().fit(time, pos_x)
+        model_y = LinearRegression().fit(time, pos_y)
+
+        x_pred = []
+        y_pred = []
+        for extra in range(0,linear_size):
+            x_pred.append(model_x.intercept_ + model_x.coef_ * (max(time_queue) + extra/linear_step))
+            y_pred.append(model_y.intercept_ + model_y.coef_ * (max(time_queue) + extra/linear_step))
+        print('formula x', model_x.intercept_, model_x.coef_)
+        print('formula y', model_y.intercept_, model_y.coef_)
+        print(x_pred)
+        print(y_pred)
+        # print('x', x_pred)
+        # print('y', y_pred)
+        for i in range(0, linear_size - 1):
+            new_point = Point(x_pred[i][0], y_pred[i][0], 0)
+            linear_fit.append(new_point)
+
+        # print('before send', linear_fit)
+
+    return linear_fit
+
+
 
 
 if __name__ == '__main__':
