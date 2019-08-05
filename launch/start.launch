@@ -1,0 +1,7 @@
+<launch>
+	<node type="rviz" name="rviz" pkg="rviz" args="-d config.rviz"/>
+	<node pkg="lc" name="laser_Tf" type="laser_tf.py" output="screen"/>
+	<node pkg="lc" name="detection_Target" type="detection_target.py" args=".57 .89 1.05 .07"/>
+	<node pkg="lc" name="laser_tf_broadcaster" type="tf_publisher.py"/>
+	<node pkg="lc" name="people_detection" type="people_detection.py"/>
+</launch>

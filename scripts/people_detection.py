@@ -401,7 +401,6 @@ def combine_lasers():
         showCircles()
         print("==================================================================")
 
-
 # takes in the laser scan and finds a cluster of laser points that could be a circle
 # returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
 # important to note that this center will change with gradient descent in another function (not the true center)
