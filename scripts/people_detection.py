@@ -15,7 +15,7 @@ from collections import deque
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error, r2_score
-
+import time
 
 pc_li_hog = PointCloud()
 pc_li_snake = PointCloud()
@@ -38,7 +38,7 @@ circle_threshold = 12
 #               range(0, 200)]
 show_time = 5
 r = .07
-queue_size = 15
+queue_size = 5
 within_margin = .02
 location_history = deque()
 location_history_time = deque()
@@ -56,6 +56,8 @@ blue = ColorRGBA(0, 0, 1, 1)
 cyan = ColorRGBA(.3, 1, 1, 1)
 prediction_margin = .2 # margin of time for searching between prediction and actual
 data = []
+center_seen = 0
+prediction_time = 0.0
 
 def callback_hog_laser_init(data):
     global pc_li_hog
@@ -311,11 +313,13 @@ def combine_lasers():
 
 
     callback_hog_laser_init(rospy.wait_for_message('/hog/scan0', LaserScan))
+
     try:
-        tf_listen.waitForTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp, rospy.Duration(2.0))
-        tf_listen.waitForTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp, rospy.Duration(2.0))
+        tf_listen.waitForTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp, rospy.Duration(5.0))
+        tf_listen.waitForTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp, rospy.Duration(5.0))
     except:
         pass
+
     snake_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp)
     snake_matrix = tf_transformer.fromTranslationRotation(snake_to_hog[0], snake_to_hog[1])
     mouse_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp)
@@ -512,9 +516,12 @@ def update_center(points):
 def showCircles():
     global ankleMarks
     global ind_list, center, center_index
-    global center_points, wthin_margin
-    global pc_display, ankles_found, linear_history, data
+    global center_points, wthin_margin, center_seen, prediction_time
+    global pc_display, ankles_found, linear_history, data, linear_seconds_in_future
     global location_history, last_time_stamp, location_history_time
+
+    if center_seen == 0:
+        prediction_time = time.time()
 
     # initialize the subscribers and the publishers for the laser, point cloud, tf, and the markers
     ankleMarkers = rospy.Publisher("/ankles", MarkerArray, queue_size=10)
@@ -733,6 +740,10 @@ def showCircles():
                         location_history_time.append(last_time_stamp)
 
                     ankles_found.append((updated_center, last_time_stamp))
+                    center_seen += 1
+                    if len(ankles_found) > 2:
+                        linear_seconds_in_future = last_time_stamp - ankles_found[-2][1]
+                    print("CENTER DETECTION FREQ: %f Hz"%(center_seen/(time.time() - prediction_time)))
                     # FOR TESTING
                     # Display the grad descent process
                     # for pt in grad_center_arr1:
@@ -1023,31 +1034,32 @@ def showCircles():
     ankleMarkers.publish(testMarks)
 
     # printing the data
-    print("pred. x")
-    for d in data:
-        print(d[0][0].x)
-    print("pred. y")
-    for d in data:
-        print(d[0][0].y)
-    print("pred. time")
-    for d in data:
-        print(d[0][1])
-    print("actual x")
-    for d in data:
-        print(d[1][0].x)
-    print("acutal y")
-    for d in data:
-        print(d[1][0].y)
-    print("time")
-    for d in data:
-        print(d[1][1])
-    print("diff")
-    for d in data:
-        print(d[2])
+    # print("pred. x")
+    # for d in data:
+    #     print(d[0][0].x)
+    # print("pred. y")
+    # for d in data:
+    #     print(d[0][0].y)
+    # print("pred. time")
+    # for d in data:
+    #     print(d[0][1])
+    # print("actual x")
+    # for d in data:
+    #     print(d[1][0].x)
+    # print("acutal y")
+    # for d in data:
+    #     print(d[1][0].y)
+    # print("time")
+    # for d in data:
+    #     print(d[1][1])
+    # print("diff")
+    # for d in data:
+    #     print(d[2])
     print("****************************************************************************")
 
 
 def linear_regression(points_queue, time_queue):
+    global linear_seconds_in_future
     linear_fit = []
     if points_queue and time_queue:
         pos_x = []
