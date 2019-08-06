@@ -11,28 +11,33 @@ Usage
 - $ cd [your catkin_workspace]
 - $ catkin_make
 - $ roslaunch lc start.launch
-  - if this launch file does not work (normally happens when playing back a rosbag file), you will need to run each script sepeartely. 
-    - do each command in a sepearte terminal
+  - if this launch file does not work (normally happens when playing back a rosbag file), you will need to run each script sepeartely. Do each command in a sepearte terminal
     - $ roscore
     - $ rosrun rviz rviz
     - $ rosbag play -l <rosbag.file>
     - $ rosrun lc laser_tf.py
-    - $ rosrun lc detection_target.py <len. of leg 1><len. of leg 2><len. of leg 3><radius of target>
+    - $ rosrun lc detection_target.py <len. of leg 1 len. of leg 2 len. of leg 3 radius of target>
     - $ rosrun lc tf_publisher.py
     - $ rosrun lc people_detection.py
       - if this script gives a "tf2.ExtrapolationException: Lookup would require extrapolation into the past." error, rerun the script until the error resolves (only occurs when playing an old rosbag file).  
 
 Subscribed topics
 -------------------
-- /scan
-    - you can change the subscribed scan topic by changing the parameter "scan_topic" in the launch file.
-- /tf
-    - to get the transforms. You should specify the fixed frame by the parameter "fixed_frame" in the launch file.
+- /hog/scan0
+  - the parent laser for the trasnformations
+- /mouse/scan0
+  - one of the children lasers
+- /snake/scan0 
+  - another one of the children lasers
 
 
 Published topics
 -------------------
-- /people_tracked
-    - the positions and velocities of the tracked people as a PersonArray message (see: leg_tracker/msg/PersonArray.msg for the message specification).
-- /visualization_marker
-    - markers for the tracked people, other tracked objects and the centroids of the detected clusters.
+- /ankles
+  - displays the ankle markers and the prediction markers on rviz
+- /combined
+  - displays the overlap of all the lasers being run as a point cloud
+- /combined_movement
+  - displays the overlap of all the lasers that have detected movement as a point cloud
+- /tf
+  - manifests the tf between the different lasers
