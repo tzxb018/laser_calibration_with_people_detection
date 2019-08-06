@@ -1,6 +1,0 @@
-<launch>
-	<node pkg="lc" name="calibrate_tf_hog" type="calibrate_tf_hog.py" output="screen"/>
-        <node pkg="lc" name="calibrate_tf_mouse" type="calibrate_tf_mouse.py" output="screen"/>
-        <node pkg="lc" name="calibrate_tf_duck" type="calibrate_tf_duck.py" output="screen"/>
-        <node pkg="lc" name="calibrate_tf_snake" type="calibrate_tf_snake.py" output="screen"/>
-</launch>

@@ -5,6 +5,36 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5755c49-21c1-4353-991f-29616ef6e58d" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_point_cloud.launch" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_point_cloud.launch.save" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/leg_tracker.launch" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/tf_hog.launch" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/2019-07-03-15-21-44.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/2019-07-10-08-52-38.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/30-40-50-pringles.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/40-70-80-2triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/40-70-80-3triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/48-62-78-2triangles.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/48-62-78-triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/58-89-105-3triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/people-58-89-105-3triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/record_without_tf.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/sim__time.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/triangle_test.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rosbag/trim-people-58-89-105-3triangle.bag" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/.testtest.py.swp" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/calibrate_tf_duck.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/calibrate_tf_hog.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/calibrate_tf_mouse.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/calibrate_tf_snake.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/hough_circles_hog.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/laser_hog_calibration.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/laser_matrix_calibration.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/laser_mouse_calibration.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/linear_regression_test.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/time_sync.py" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/config.rviz" afterPath="$PROJECT_DIR$/config.rviz" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/people_detection.py" afterPath="$PROJECT_DIR$/scripts/people_detection.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,41 +62,28 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="people_detection.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="people_detection.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/people_detection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="40" column="14" lean-forward="false" selection-start-line="40" selection-start-column="14" selection-end-line="40" selection-end-column="14" />
+            <state relative-caret-position="21">
+              <caret line="921" column="65" lean-forward="false" selection-start-line="921" selection-start-column="65" selection-end-line="921" selection-end-column="65" />
               <folding>
                 <element signature="e#22#34#0" expanded="true" />
-                <element signature="e#2135#2200#0" expanded="false" />
-                <element signature="e#2237#5222#0" expanded="false" />
-                <element signature="e#5261#8334#0" expanded="false" />
-                <element signature="e#8373#11446#0" expanded="false" />
-                <element signature="e#11496#12208#0" expanded="false" />
-                <element signature="e#16168#18293#0" expanded="false" />
-                <element signature="e#18535#18610#0" expanded="false" />
-                <element signature="e#18729#19751#0" expanded="false" />
-                <element signature="e#21514#21572#0" expanded="false" />
-                <element signature="e#23525#23545#0" expanded="false" />
-                <element signature="e#27048#27091#0" expanded="false" />
-                <element signature="e#30999#31012#0" expanded="false" />
-                <element signature="e#40163#40209#0" expanded="false" />
-                <element signature="e#43649#43699#0" expanded="false" />
-                <element signature="e#47631#49377#0" expanded="false" />
-                <marker date="1565041269833" expanded="true" signature="27037:29765" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="linear_regression_test.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/scripts/linear_regression_test.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="540">
-              <caret line="37" column="15" lean-forward="false" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
-              <folding>
-                <element signature="e#986#1001#0" expanded="true" />
+                <element signature="e#2131#2196#0" expanded="false" />
+                <element signature="e#2233#5218#0" expanded="false" />
+                <element signature="e#5257#8330#0" expanded="false" />
+                <element signature="e#8369#11442#0" expanded="false" />
+                <element signature="e#11492#12204#0" expanded="false" />
+                <element signature="e#16164#18289#0" expanded="false" />
+                <element signature="e#18531#18606#0" expanded="false" />
+                <element signature="e#18725#19747#0" expanded="false" />
+                <element signature="e#21766#21824#0" expanded="false" />
+                <element signature="e#23777#23797#0" expanded="false" />
+                <element signature="e#27300#27343#0" expanded="false" />
+                <element signature="e#40565#40611#0" expanded="false" />
+                <element signature="e#44085#44135#0" expanded="false" />
+                <element signature="e#48067#49813#0" expanded="false" />
+                <marker date="1565109010453" expanded="true" signature="27289:30017" ph="..." />
               </folding>
             </state>
           </provider>
@@ -75,28 +92,18 @@
       <file leaf-file-name="laser_tf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="21">
+            <state relative-caret-position="216">
               <caret line="25" column="72" lean-forward="false" selection-start-line="25" selection-start-column="72" selection-end-line="25" selection-end-column="72" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="detection_target.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="detection_target.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/detection_target.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-12957">
+            <state relative-caret-position="-11157">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="laser_hog_calibration.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/scripts/laser_hog_calibration.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8028">
-              <caret line="463" column="71" lean-forward="false" selection-start-line="463" selection-start-column="49" selection-end-line="463" selection-end-column="71" />
               <folding />
             </state>
           </provider>
@@ -189,7 +196,21 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="scripts" />
+              <option name="myItemId" value="srv" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lc_calibration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lc_calibration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="rosbag" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -352,9 +373,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1615" height="1026" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16532508" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16532508" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -399,22 +420,21 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
-            <element signature="e#2135#2200#0" expanded="false" />
-            <element signature="e#2237#5222#0" expanded="false" />
-            <element signature="e#5261#8334#0" expanded="false" />
-            <element signature="e#8373#11446#0" expanded="false" />
-            <element signature="e#11496#12208#0" expanded="false" />
-            <element signature="e#16168#18293#0" expanded="false" />
-            <element signature="e#18535#18610#0" expanded="false" />
-            <element signature="e#18729#19751#0" expanded="false" />
-            <element signature="e#21514#21572#0" expanded="false" />
-            <element signature="e#23525#23545#0" expanded="false" />
-            <element signature="e#27048#27091#0" expanded="false" />
-            <element signature="e#30999#31012#0" expanded="false" />
-            <element signature="e#40163#40209#0" expanded="false" />
-            <element signature="e#43649#43699#0" expanded="false" />
-            <element signature="e#47631#49377#0" expanded="false" />
-            <marker date="1565041269833" expanded="true" signature="27037:29765" ph="..." />
+            <element signature="e#2131#2196#0" expanded="false" />
+            <element signature="e#2233#5218#0" expanded="false" />
+            <element signature="e#5257#8330#0" expanded="false" />
+            <element signature="e#8369#11442#0" expanded="false" />
+            <element signature="e#11492#12204#0" expanded="false" />
+            <element signature="e#16164#18289#0" expanded="false" />
+            <element signature="e#18531#18606#0" expanded="false" />
+            <element signature="e#18725#19747#0" expanded="false" />
+            <element signature="e#21766#21824#0" expanded="false" />
+            <element signature="e#23777#23797#0" expanded="false" />
+            <element signature="e#27300#27343#0" expanded="false" />
+            <element signature="e#40565#40611#0" expanded="false" />
+            <element signature="e#44085#44135#0" expanded="false" />
+            <element signature="e#48067#49813#0" expanded="false" />
+            <marker date="1565109010453" expanded="true" signature="27289:30017" ph="..." />
           </folding>
         </state>
       </provider>
@@ -423,9 +443,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="540">
           <caret line="37" column="15" lean-forward="true" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
-          <folding>
-            <element signature="e#986#1001#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -445,40 +463,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/laser_hog_calibration.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8028">
-          <caret line="463" column="71" lean-forward="false" selection-start-line="463" selection-start-column="49" selection-end-line="463" selection-end-column="71" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/linear_regression_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="37" column="15" lean-forward="false" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
-          <folding>
-            <element signature="e#986#1001#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21">
-          <caret line="25" column="72" lean-forward="false" selection-start-line="25" selection-start-column="72" selection-end-line="25" selection-end-column="72" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/detection_target.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-12957">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/scripts/tf_publisher.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="252">
@@ -491,27 +475,106 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/people_detection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="40" column="14" lean-forward="false" selection-start-line="40" selection-start-column="14" selection-end-line="40" selection-end-column="14" />
+        <state relative-caret-position="21">
+          <caret line="921" column="65" lean-forward="false" selection-start-line="921" selection-start-column="65" selection-end-line="921" selection-end-column="65" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
-            <element signature="e#2135#2200#0" expanded="false" />
-            <element signature="e#2237#5222#0" expanded="false" />
-            <element signature="e#5261#8334#0" expanded="false" />
-            <element signature="e#8373#11446#0" expanded="false" />
-            <element signature="e#11496#12208#0" expanded="false" />
-            <element signature="e#16168#18293#0" expanded="false" />
-            <element signature="e#18535#18610#0" expanded="false" />
-            <element signature="e#18729#19751#0" expanded="false" />
-            <element signature="e#21514#21572#0" expanded="false" />
-            <element signature="e#23525#23545#0" expanded="false" />
-            <element signature="e#27048#27091#0" expanded="false" />
-            <element signature="e#30999#31012#0" expanded="false" />
-            <element signature="e#40163#40209#0" expanded="false" />
-            <element signature="e#43649#43699#0" expanded="false" />
-            <element signature="e#47631#49377#0" expanded="false" />
-            <marker date="1565041269833" expanded="true" signature="27037:29765" ph="..." />
+            <element signature="e#2131#2196#0" expanded="false" />
+            <element signature="e#2233#5218#0" expanded="false" />
+            <element signature="e#5257#8330#0" expanded="false" />
+            <element signature="e#8369#11442#0" expanded="false" />
+            <element signature="e#11492#12204#0" expanded="false" />
+            <element signature="e#16164#18289#0" expanded="false" />
+            <element signature="e#18531#18606#0" expanded="false" />
+            <element signature="e#18725#19747#0" expanded="false" />
+            <element signature="e#21766#21824#0" expanded="false" />
+            <element signature="e#23777#23797#0" expanded="false" />
+            <element signature="e#27300#27343#0" expanded="false" />
+            <element signature="e#40565#40611#0" expanded="false" />
+            <element signature="e#44085#44135#0" expanded="false" />
+            <element signature="e#48067#49813#0" expanded="false" />
+            <marker date="1565109010453" expanded="true" signature="27289:30017" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/hough_circles_hog.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/calibrate_tf_hog.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/time_sync.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="201">
+          <caret line="209" column="27" lean-forward="true" selection-start-line="209" selection-start-column="27" selection-end-line="209" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/linear_regression_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="37" column="15" lean-forward="false" selection-start-line="37" selection-start-column="15" selection-end-line="37" selection-end-column="15" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/calibrate_tf_duck.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/laser_hog_calibration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7015">
+          <caret line="326" column="41" lean-forward="true" selection-start-line="326" selection-start-column="41" selection-end-line="326" selection-end-column="41" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="25" column="72" lean-forward="false" selection-start-line="25" selection-start-column="72" selection-end-line="25" selection-end-column="72" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/laser_matrix_calibration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-324">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/.idea/workspace.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/detection_target.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-11157">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>

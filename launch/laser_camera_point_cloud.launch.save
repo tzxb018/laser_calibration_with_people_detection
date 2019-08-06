@@ -1,5 +1,0 @@
-<launch>
-	<node pkg="laser_camera_calibration" name="calibrate_tf_hog" type="calibrate_tf_hog.py" output="screen"/>
-
-        <node pkg="laser_camera_calibration" name="calibrate_tf_mouse" type="calibrate_tf_mouse.py" output="screen"/>
-</launch>
