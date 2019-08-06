@@ -304,8 +304,8 @@ def make_PC_from_Laser_display(laser_in):
 def combine_lasers():
     global pc_li_hog, pc_display, pc_li_mouse, pc_li_snake
 
-    bg_pub = rospy.Publisher('/combined_movement', PointCloud, queue_size=10)
-    bg_pub_all = rospy.Publisher('/combined', PointCloud, queue_size=10)
+    bg_pub = rospy.Publisher('/combined_movement', PointCloud, queue_size=10) # only displays the movement
+    bg_pub_all = rospy.Publisher('/combined', PointCloud, queue_size=10) # displays the combined poitn cloud of all lasers
     tf_listen = tf.TransformListener(True)
     tf_transformer = tf.TransformerROS()
 
@@ -313,13 +313,14 @@ def combine_lasers():
 
 
     callback_hog_laser_init(rospy.wait_for_message('/hog/scan0', LaserScan))
-
+    # searches for the tf being published by the tf_publisher.py script
     try:
         tf_listen.waitForTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp, rospy.Duration(5.0))
         tf_listen.waitForTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp, rospy.Duration(5.0))
     except:
         pass
 
+    # finds the tf and makes it into a matrix
     snake_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp)
     snake_matrix = tf_transformer.fromTranslationRotation(snake_to_hog[0], snake_to_hog[1])
     mouse_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp)
@@ -339,9 +340,11 @@ def combine_lasers():
         pc_display = PointCloud()
         pc_display_all = PointCloud()
 
+        # point stamp used to translate all the points in the point cloud in accordance to the tf
         p1 = PointStamped()
         p1.header = copy.deepcopy(pc_li_hog.header)
 
+        # translating from hog to hog (just plotting the same points onto the new point cloud)
         for pt in pc_li_hog.points:
             p1.point.x = pt.x
             p1.point.y = pt.y
@@ -358,15 +361,19 @@ def combine_lasers():
 
         num_point = numpy.array([0.0,0.0,0.0,1.0])
 
+        # updating the positions of the points in the snake scan in accordance with the tf matrix
+        # only the movement data for the snake scan
         for pt in pc_li_snake.points:
             num_point[0] = pt.x
             num_point[1] = pt.y
             num_point[2] = pt.z
 
+            # applying the matrix transformation for the laser scan in accordance to hog
             out1 = numpy.dot(snake_matrix, num_point)
 
             pc_display.points.append(Point(out1[0], out1[1], out1[2]))
 
+        # all the points in the snake scan being translated
         for pt in pc_li_snake_all.points:
             num_point[0] = pt.x
             num_point[1] = pt.y
@@ -376,6 +383,8 @@ def combine_lasers():
 
             pc_display_all.points.append(Point(out1[0], out1[1], out1[2]))
 
+        # updating the positions of the points in the mouse scan in accordance with the tf matrix
+        # same process as snake ^^^, except for mouse
         for pt in pc_li_mouse.points:
             num_point[0] = pt.x
             num_point[1] = pt.y
@@ -399,10 +408,15 @@ def combine_lasers():
 
         pc_display_all.header = copy.deepcopy(pc_li_hog.header)
         pc_display_all.header.frame_id = "map"
+
+        # publishing the movement data
         bg_pub.publish(pc_display)
+
+        # publishing all the combined lasers' data
         bg_pub_all.publish(pc_display_all)
-        # print(pc_display)
-        showCircles()
+
+        # finds the ankles in the movement data
+        ankleFinder()
         print("==================================================================")
 
 # takes in the laser scan and finds a cluster of laser points that could be a circle
@@ -474,7 +488,7 @@ def dist_from_center(point, center):
     square_dist = (point.x - center.x) ** 2 + (point.y - center.y) ** 2
     return square_dist ** 0.5
 
-
+# converts into a point
 def tuple_to_point(pt):
     try:
         return Point(pt[0], pt[1], 0)
@@ -513,7 +527,8 @@ def update_center(points):
         return
 
 
-def showCircles():
+# same process as finding circles in the detection target, except we use it for finding moving ankles
+def ankleFinder():
     global ankleMarks
     global ind_list, center, center_index
     global center_points, wthin_margin, center_seen, prediction_time
@@ -1062,10 +1077,14 @@ def showCircles():
     #     print(d[2])
     print("****************************************************************************")
 
-
+# finds the linear regression prediction of the moving ankles
 def linear_regression(points_queue, time_queue):
     global linear_seconds_in_future
+
+    # there is no need for an array, since we are just outputting one prediction point
+    # only kept for ease since I was using arrays to hold multiple points before
     linear_fit = []
+
     if points_queue and time_queue:
         pos_x = []
         pos_y = []
@@ -1078,38 +1097,23 @@ def linear_regression(points_queue, time_queue):
         for t in time_queue:
             time.append(t)
 
+        # putting them into matricies for the linear regression model to use
         pos_x, pos_y, time = numpy.array(pos_x), numpy.array(pos_y), numpy.array(time).reshape((-1,1))
-        # pos_x = numpy.array(pos_x).reshape((-1, 1))
-        # pos_y = numpy.array(pos_y).reshape((-1, 1))
-        # time = numpy.array(time).reshape((-1,1))
-        # print(pos_x, pos_y, time)
 
+        # applying linear regression
         model_x = LinearRegression().fit(time, pos_x)
         model_y = LinearRegression().fit(time, pos_y)
 
+        # again, these don't need to be arrays
         x_pred = []
         y_pred = []
-        max_time = max(time_queue)
-        # print(model_x.intercept_)
-        # print(model_x.coef_)
+        max_time = max(time_queue) # finds the most recent time
+
+        # finding the prediction point based on the linear regression model
         x_pred.append(model_x.intercept_ + model_x.coef_ * (max_time + linear_seconds_in_future))
         y_pred.append(model_y.intercept_ + model_y.coef_ * (max_time + linear_seconds_in_future))
-        # for extra in range(0,linear_size):
-        #     x_pred.append(model_x.intercept_ + model_x.coef_ * (max_time + extra / linear_seconds_in_future))
-        #     y_pred.append(model_y.intercept_ + model_y.coef_ * (max_time + extra / linear_seconds_in_future))
-        # print('formula x', model_x.intercept_, model_x.coef_)
-        # print('formula y', model_y.intercept_, model_y.coef_)
-        # print(x_pred)
-        # print(y_pred)
-        # print('x', x_pred)
-        # print('y', y_pred)
-        linear_fit.append((Point(x_pred[0][0], y_pred[0][0], 0), max(time_queue) + linear_seconds_in_future))
-        # return linear_fit
-        # for i in range(0, linear_size - 1):
-        #     new_point = Point(x_pred[i][0], y_pred[i][0], 0)
-        #     linear_fit.append(new_point)
 
-        # print('before send', linear_fit)
+        linear_fit.append((Point(x_pred[0][0], y_pred[0][0], 0), max(time_queue) + linear_seconds_in_future))
 
     return linear_fit
 

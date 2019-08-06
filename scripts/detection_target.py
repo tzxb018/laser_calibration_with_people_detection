@@ -45,6 +45,7 @@ def detection_target(req):
     global laser_in, pc_li, pc_display, max_count, timeout_time
     print(req.laser_topic)
     a = 0
+    # goes through the laser 10 times to try to find the calibration target for each laser
     while True:
         a += 1
         # getting the input laser scan for the service
@@ -52,13 +53,12 @@ def detection_target(req):
         laser_in = rospy.wait_for_message(req.laser_topic, LaserScan)
         print("retrived rospy message from " + str(req.laser_topic))
 
-
-        # print(laser_in)
         # converting the laser scan into a point cloud for easier calculations
         updateLaser(laser_in)
 
         out = showCircles()
 
+        # if the target is found, break the searching while loop
         if out != []:
             print("out")
             print("Point a\n" + str(Point(out[6], out[7], 0)))
@@ -72,7 +72,11 @@ def detection_target(req):
 
         print("attempt %d failed. Try again."%(a))
 
+    # returns the info for the service detection_target.srv
+    # geometry_msgs/Point point_a, geometry_msgs/Point point_c
     return Point(out[6], out[7], 0), Point(out[4], out[5], 0)
+
+
 # takes in the laser scan and finds a cluster of laser points that could be a circle
 # returns a list of indexes (each representing the angle from the laser) and the possible center of the circle
 # important to note that this center will change with gradient descent in another function (not the true center)
@@ -223,7 +227,7 @@ def updateLaser(data):
 
     pc_li = make_PC_from_Laser(data)
     pc_display = make_PC_from_Laser_display(data)
-    print(data.header.stamp)
+    # print(data.header.stamp)
     lastLaser.header.stamp = rospy.Time.now()
     # laser_pub.publish(lastLaser)
 
