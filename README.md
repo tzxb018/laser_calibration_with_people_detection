@@ -1,5 +1,6 @@
 Laser Calibration with People Detection
 ===========
+![ROS](https://img.shields.io/badge/ROS-Kinetic-brightgreen.svg)  ![OS](https://img.shields.io/badge/OS-Ubuntu%2016.04-orange.svg )
 
 Usage
 -------------------
