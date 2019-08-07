@@ -2,25 +2,49 @@ Laser Calibration with People Detection
 ===========
 ![ROS](https://img.shields.io/badge/ROS-Kinetic-brightgreen.svg)  ![OS](https://img.shields.io/badge/OS-Ubuntu%2016.04-orange.svg )
 
-Usage
+Overview
+------------------
+This ROS package combines multiple laser scans from RPLIDAR A3M1 lasers into a calibrated point cloud. This package will then track the ankles of moving people in the point cloud and predict their paths with linear regression. 
+
+**Keywords:** 2-dimensional laser, RPLIDAR A3M1, point cloud, matrix transformations, calibration, linear regression
+
+## Authors
+
+* **Tomohide Bessho** - *UNR REU student* - https://github.com/tzxb018
+* **Andrew Palmer** - *UNR Grad Mentor* - https://github.com/ahpalmerUNR
+
+Install
 -------------------
-- Clone laser_calibration_with_people detection into your kinetic catkin source directory
 - Clone rplidar_ros into your kinetic catkin source directory: https://github.com/Slamtec/rplidar_ros
 - Install sckikit-learn: https://scikit-learn.org/stable/install.html
-  - $ pip install -U scikit-learn
+  ```
+  pip install -U scikit-learn
+  ```
   - If you are using Python 2.7, you will need to install scikit-learn 0.20 instead of the latest version
-- $ cd [your catkin_workspace]
-- $ catkin_make
-- $ roslaunch lc start.launch
-  - If this launch file does not work (normally happens when playing back a rosbag file), you will need to run each script sepeartely. Do each command in a sepearte terminal
-    - $ roscore
-    - $ rosrun rviz rviz
-    - $ rosbag play -l <rosbag.file> (If you are running a rosbag file)
-    - $ rosrun lc laser_tf.py
-    - $ rosrun lc detection_target.py <len. of leg 1 len. of leg 2 len. of leg 3 radius of target>
-    - $ rosrun lc tf_publisher.py
-    - $ rosrun lc people_detection.py
-      - If this script gives a "tf2.ExtrapolationException: Lookup would require extrapolation into the past." error, rerun the script until the error resolves (only occurs when playing an old rosbag file).  
+- Run the following commands to install the package
+  ```
+	cd catkin_workspace/src
+	git clone https://github.com/tzxb018/laser_calibration_with_people_detection/
+	cd ../
+	catkin_make
+  ```
+Usage
+-------------------
+- Use the combined launch file to run the package
+  ```
+  roslaunch lc start.launch
+  ```
+- If this launch file does not work (normally happens when playing back a rosbag file), you will need to run each script sepeartely. Do each command in a sepearte terminal.
+    ```
+    roscore
+    rosrun rviz rviz
+    rosbag play -l <rosbag.file> (If you are running a rosbag file)
+    rosrun lc laser_tf.py
+    rosrun lc detection_target.py <len. of leg 1><len. of leg 2><len. of leg 3><radius of target>
+    rosrun lc tf_publisher.py
+    rosrun lc people_detection.py
+    ```
+- If this script gives a "tf2.ExtrapolationException: Lookup would require extrapolation into the past." error, rerun the script until the error resolves (only occurs when playing an old rosbag file).  
       
 Important Notes
 -------------------
