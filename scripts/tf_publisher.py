@@ -10,8 +10,8 @@ import numpy
 from lc.msg import matrix_tf
 import sensor_msgs.point_cloud2 as pc
 import laser_geometry as lp
-
-
+from visualization_msgs.msg import MarkerArray, Marker
+from std_msgs.msg import Header, ColorRGBA
 
 laser_hog, laser_mouse, laser_snake = [], [], []
 
@@ -58,11 +58,14 @@ pc_li_snake = PointCloud()
 pc_li_mouse = PointCloud()
 pc_display = PointCloud()
 
+cyan = ColorRGBA(.3, 1, 1, 1)
+
 def callback_hog_laser(data):
     global lastLaser_hog, laser_pub_hog, time_hog, pc_li_hog
     time_hog = data.header.stamp
     # print("hog  : " + str(data.header.stamp.nsecs))
     pc_li_hog = make_PC_from_Laser_display(data)
+    lastLaser_hog = data
 
 
 def callback_mouse_laser(data):
@@ -150,14 +153,20 @@ def publish_tf():
     laser_sub_hog = rospy.Subscriber("/hog/scan0", LaserScan, callback_hog_laser)
     laser_sub_mouse = rospy.Subscriber("/mouse/scan0", LaserScan, callback_mouse_laser)
     laser_sub_snake = rospy.Subscriber("/snake/scan0", LaserScan, callback_snake_laser)
+    # laser_sub_duck = rospy.Subscriber("/duck/scan0", LaserScan, callback_duck_laser)
 
     laser_target_finder = rospy.ServiceProxy('detection_target', Detection_target)
+
+    triangle_marks = rospy.Publisher("/possible/triangles", MarkerArray, queue_size=10)
+    testMarks = MarkerArray()
+    id = 0
 
     # calls the service for finding the calibration target
     # print(lastLaser_hog)
     reu = laser_target_finder("/hog/scan0")
     hog_ref_point_a = reu.point_a
     hog_ref_point_c = reu.point_c
+    hog_ref_point_b = reu.point_b
 
     rev = laser_target_finder("/mouse/scan0")
     mouse_ref_point_a = rev.point_a
@@ -184,6 +193,9 @@ def publish_tf():
     # print(hog_ref_point_c)
     # print(mouse_ref_point_a)
     # print(mouse_ref_point_c)
+
+
+
 
     laser_tf_listener = rospy.ServiceProxy('laser_tf', Laser_tf)
 
@@ -282,7 +294,60 @@ def publish_tf():
 
         # # call the laser update to publish the updated laser scan
 
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
 
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(0.0)
+        testMarks.markers[-1].type = Marker.LINE_STRIP
+        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = cyan
+        testMarks.markers[-1].points = [hog_ref_point_a, hog_ref_point_c]
+        testMarks.markers[-1].header = lastLaser_hog.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "final_triangle"
+        id += 1  # keep the ids unique
+
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
+
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(0.0)
+        testMarks.markers[-1].type = Marker.LINE_STRIP
+        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = cyan
+        testMarks.markers[-1].points = [hog_ref_point_b, hog_ref_point_c]
+        testMarks.markers[-1].header = lastLaser_hog.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "final_triangle"
+        id += 1  # keep the ids unique
+
+        # add a new marker to the marker array
+        testMarks.markers.append(Marker())
+
+        # keep the marker ids unique
+        testMarks.markers[-1].id = id
+
+        # determining how long the markers will stay up in Rviz
+        testMarks.markers[-1].lifetime = rospy.Duration(0.0)
+        testMarks.markers[-1].type = Marker.LINE_STRIP
+        testMarks.markers[-1].scale = Vector3(.03, .03, .01)
+        testMarks.markers[-1].action = 0
+        testMarks.markers[-1].color = cyan
+        testMarks.markers[-1].points = [hog_ref_point_a, hog_ref_point_b]
+        testMarks.markers[-1].header = lastLaser_hog.header  # Header(frame_id="/map")
+        testMarks.markers[-1].ns = "final_triangle"
+        id += 1  # keep the ids unique
+
+        # Publish triangle
+        triangle_marks.publish(testMarks)
+        
         rate.sleep()
 
 if __name__ == '__main__':

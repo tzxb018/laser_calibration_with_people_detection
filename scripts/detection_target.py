@@ -37,13 +37,13 @@ laser_pub = []
 laser_in = LaserScan()
 send_matrix = []
 laser_topic_name = ""
-max_count = 10
+max_count = 20
 min_dist = .25
 timeout_time = rospy.Duration(10.0)
 
 def detection_target(req):
     global laser_in, pc_li, pc_display, max_count, timeout_time
-    print(req.laser_topic)
+    # print(req.laser_topic)
     a = 0
     # goes through the laser 10 times to try to find the calibration target for each laser
     while True:
@@ -63,6 +63,7 @@ def detection_target(req):
             print("out")
             print("Point a\n" + str(Point(out[6], out[7], 0)))
             print("Point c\n" + str(Point(out[4], out[5], 0)))
+            print("Point b\n" + str(Point(out[8], out[9], 0)))
             print("****************************************************************************")
             break
 
@@ -74,7 +75,7 @@ def detection_target(req):
 
     # returns the info for the service detection_target.srv
     # geometry_msgs/Point point_a, geometry_msgs/Point point_c
-    return Point(out[6], out[7], 0), Point(out[4], out[5], 0)
+    return Point(out[6], out[7], 0), Point(out[4], out[5], 0), Point(out[8], out[9], 0)
 
 
 # takes in the laser scan and finds a cluster of laser points that could be a circle
@@ -216,7 +217,6 @@ def updateLaser(data):
     # if isFinshed:
     lastLaser = copy.deepcopy(data)
 
-    print(data)
     if "angle_increment" not in laserSettings:
         laserSettings["angle_min"] = data.angle_min
         laserSettings["angle_max"] = data.angle_max
@@ -530,7 +530,6 @@ def showCircles():
 def triangle_finder():
     global center_points, possible_triangle
 
-    triangle_marks = rospy.Publisher("/possible/triangles", MarkerArray, queue_size=10)
 
     # measurements of physical triangle (calibration target)
     # leg c is the hypotenuse
@@ -570,8 +569,7 @@ def triangle_finder():
 
     # print(possible_legs_matrix)
     possible_triangle = []
-    testMarks = MarkerArray()
-    id = 0
+
 
     # for leg_points in possible_legs_a:
     #     # add a new marker to the marker array
@@ -691,27 +689,7 @@ def triangle_finder():
 
             leg_num += 1
 
-            # add a new marker to the marker array
-            testMarks.markers.append(Marker())
 
-            # keep the marker ids unique
-            testMarks.markers[-1].id = id
-
-            # determining how long the markers will stay up in Rviz
-            testMarks.markers[-1].lifetime = rospy.Duration(show_time)
-            testMarks.markers[-1].type = Marker.LINE_STRIP
-            testMarks.markers[-1].scale = Vector3(.03, .03, .01)
-            testMarks.markers[-1].action = 0
-            testMarks.markers[-1].color = leg_color
-            testMarks.markers[-1].points = [Point(line_points[0][0], line_points[0][1], 0),
-                                            Point(line_points[1][0], line_points[1][1], 0)]
-            testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
-            testMarks.markers[-1].ns = "final_triangle"
-            id += 1  # keep the ids unique
-            print("final triange")
-
-    # Publish triangle
-    triangle_marks.publish(testMarks)
 
     out = matrix_transformation()
     return out
@@ -738,17 +716,6 @@ def matrix_transformation():
         line_b = triangle[1]
 
         # finds the common point between legs a and b, the right angle of the triangle
-        # this point will be used as a reference point
-        # print(line_a)
-        # print(line_b)
-        # print(triangle[1][0])
-        # print(triangle[1])
-        # if triangle[0][0] in triangle[1]:
-        #     point_c = triangle[0][0]
-        # else:
-        #     point_c = triangle[1][1]
-        #
-        # print(point_c)
         if triangle[0][0] in triangle[1]:
             point_c = triangle[0][0]
             point_a = triangle[0][1]
@@ -756,22 +723,23 @@ def matrix_transformation():
             point_c = triangle[0][1]
             point_a = triangle[0][0]
 
+        # finds point b
+        if point_c == triangle[1][0]:
+            point_b = triangle[1][1]
+        else:
+            point_b = triangle[1][0]
+
         # finding the basis using the legs
         grad_a_rise = float((line_a[0][1] - line_a[1][1]))
         grad_a_run = float(line_a[0][0] - line_a[1][0])
         grad_b_rise = float((line_b[0][1] - line_b[1][1]))
         grad_b_run = float(line_b[0][0] - line_b[1][0])
 
-        send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1]]
+        send_matrix = [grad_a_rise, grad_a_run, grad_b_rise, grad_b_run, point_c[0], point_c[1], point_a[0], point_a[1], point_b[0], point_b[1]]
         return send_matrix
-        # basis.matrix_tf = send_matrix
-        # print(basis.matrix_tf)
-        # publisher.publish(basis)
     else:
         send_matrix = []
         return send_matrix
-        # basis.matrix_tf = send_matrix
-        # publisher.publish(basis)
 
 
 def detection_target_server():
