@@ -13,6 +13,9 @@ This ROS package combines multiple laser scans from RPLIDAR A3M1 lasers into a c
 * **Tomohide Bessho** - *UNR REU student* - https://github.com/tzxb018
 * **Andrew Palmer** - *UNR Grad Mentor* - https://github.com/ahpalmerUNR
 
+
+![Example image](sample.png)
+
 Install
 -------------------
 - Clone rplidar_ros into your kinetic catkin source directory: https://github.com/Slamtec/rplidar_ros
