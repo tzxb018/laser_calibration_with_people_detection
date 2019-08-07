@@ -54,7 +54,7 @@ Important Notes
       - If you are manually running each script, add the same agruments to the script command. 
       - Ex: $ rosrun lc detection_target.py .57 .89 1.05 .07
 - The laser subscriber topics (explained after), were all namespaced into the following three names: hog, mouse, snake. 
-    - If you are trying to use four lasers instead of three, go into the tf_publisher.py script and uncomment lines 170-172, 206-211, and 264-281. 
+    - If you are trying to use four lasers instead of three, go into the tf_publisher.py script and uncomment lines 156, 179-181, 218-223, and 283-293. 
     - Also, go into people_detection.py script and uncomment lines 395, 404-405, 419, 488-504.
 - To launch the lasers, download and catkin_make this package onto each Raspberry Pi with the RPLIDAR A3M1 laser connected to it. For each Pi, run a different launch file. Please make sure that the Pis run lc_hog.launch, lc_mouse.launch, lc_snake.launch, and lc_duck.launch in that following order.
 
@@ -77,6 +77,8 @@ Published Topics
   - displays the overlap of all the lasers being run as a point cloud
 - /combined_movement
   - displays the overlap of all the lasers that have detected movement as a point cloud
+- /possible/triangles
+  - displays the triangular calibration target in rviz
 - /tf
   - manifests the tf between the different lasers
   
