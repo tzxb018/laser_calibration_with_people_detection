@@ -15,7 +15,7 @@ Usage
   - If this launch file does not work (normally happens when playing back a rosbag file), you will need to run each script sepeartely. Do each command in a sepearte terminal
     - $ roscore
     - $ rosrun rviz rviz
-    - $ rosbag play -l <rosbag.file>
+    - $ rosbag play -l <rosbag.file> (If you are running a rosbag file)
     - $ rosrun lc laser_tf.py
     - $ rosrun lc detection_target.py <len. of leg 1 len. of leg 2 len. of leg 3 radius of target>
     - $ rosrun lc tf_publisher.py
@@ -32,6 +32,7 @@ Important Notes
 - The laser subscriber topics (explained after), were all namespaced into the following three names: hog, mouse, snake. 
     - If you are trying to use four lasers instead of three, go into the tf_publisher.py script and uncomment lines 170-172, 206-211, and 264-281. 
     - Also, go into people_detection.py script and uncomment lines 395, 404-405, 419, 488-504.
+- To launch the lasers, download and catkin_make this package onto each Raspberry Pi with the RPLIDAR A3M1 laser connected to it. For each Pi, run a different launch file. Please make sure that the Pis run lc_hog.launch, lc_mouse.launch, lc_snake.launch, and lc_duck.launch in that following order.
 
 Subscribed Topics
 -------------------
