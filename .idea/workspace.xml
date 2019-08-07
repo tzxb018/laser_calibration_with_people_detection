@@ -4,12 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/scripts/people_detection.py" line="475" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5755c49-21c1-4353-991f-29616ef6e58d" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_duck.launch" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_hog.launch" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_mouse.launch" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/launch/laser_camera_snake.launch" afterPath="" />
-    </list>
+    <list default="true" id="d5755c49-21c1-4353-991f-29616ef6e58d" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -23,10 +18,10 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="tf_publisher.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tf_publisher.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/tf_publisher.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2412">
+            <state relative-caret-position="-1170">
               <caret line="95" column="44" lean-forward="true" selection-start-line="95" selection-start-column="44" selection-end-line="95" selection-end-column="44" />
               <folding>
                 <element signature="e#22#34#0" expanded="true" />
@@ -63,10 +58,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="laser_tf.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="laser_tf.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
+            <state relative-caret-position="432">
               <caret line="24" column="57" lean-forward="false" selection-start-line="24" selection-start-column="57" selection-end-line="24" selection-end-column="57" />
               <folding>
                 <element signature="e#22#34#0" expanded="true" />
@@ -545,18 +540,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/srv/Detection_target.srv">
+    <entry file="file://$PROJECT_DIR$/scripts/tf_publisher.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="24" column="57" lean-forward="false" selection-start-line="24" selection-start-column="57" selection-end-line="24" selection-end-column="57" />
+        <state relative-caret-position="-1170">
+          <caret line="95" column="44" lean-forward="true" selection-start-line="95" selection-start-column="44" selection-end-line="95" selection-end-column="44" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
           </folding>
@@ -607,10 +594,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/tf_publisher.py">
+    <entry file="file://$PROJECT_DIR$/srv/Detection_target.srv">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2412">
-          <caret line="95" column="44" lean-forward="true" selection-start-line="95" selection-start-column="44" selection-end-line="95" selection-end-column="44" />
+        <state relative-caret-position="72">
+          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/laser_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="57" lean-forward="false" selection-start-line="24" selection-start-column="57" selection-end-line="24" selection-end-column="57" />
           <folding>
             <element signature="e#22#34#0" expanded="true" />
           </folding>
