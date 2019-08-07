@@ -20,16 +20,19 @@ import time
 pc_li_hog = PointCloud()
 pc_li_snake = PointCloud()
 pc_li_mouse = PointCloud()
+pc_li_duck = PointCloud()
 pc_display = PointCloud()
 pc_li_hog_all = PointCloud()
 pc_li_snake_all = PointCloud()
 pc_li_mouse_all = PointCloud()
+pc_li_duck_all = PointCloud()
 pc_display_all = PointCloud()
 laser_pub = []
 laser_in = LaserScan()
 old_data_hog1, old_data_hog2, old_data_hog3, old_data_hog4 = [], [], [], []
 old_data_snake1, old_data_snake2, old_data_snake3, old_data_snake4 = [], [], [], []
 old_data_mouse1, old_data_mouse2, old_data_mouse3, old_data_mouse4 = [], [], [], []
+old_data_duck1, old_data_duck2, old_data_duck3, old_data_duck4 = [], [], [], []
 min_variance = .05
 max_range = 25.0
 rate = .1
@@ -58,6 +61,7 @@ prediction_margin = .2 # margin of time for searching between prediction and act
 data = []
 center_seen = 0
 prediction_time = 0.0
+
 
 def callback_hog_laser_init(data):
     global pc_li_hog
@@ -279,6 +283,78 @@ def callback_snake_laser(data):
     pc_li_snake_all = make_PC_from_Laser_display(data)
 
 
+def callback_duck_laser(data):
+    global pc_li_duck, old_data_duck1, old_data_duck2, old_data_duck3, old_data_duck4, pc_li_duck_all
+
+    # have 5 arrays store 5 most recent laser scans
+    # find variance of each index in 5 frames
+    # if variance is greater than threshold, then detect as movmenet, else nah
+    points_to_be_converted = []
+    # print("duck")
+
+    # if there is history of the laser scans (should work besides the very first laser scan)
+    if old_data_duck1 and old_data_duck2 and old_data_duck3 and old_data_duck4:
+
+        # convert to lists
+        data.ranges = list(data.ranges)
+        old_data_duck1.ranges = list(old_data_duck1.ranges)
+        old_data_duck2.ranges = list(old_data_duck2.ranges)
+        old_data_duck3.ranges = list(old_data_duck3.ranges)
+        old_data_duck4.ranges = list(old_data_duck4.ranges)
+
+        # iterating through each angle of the laser
+        for i in range(0, len(data.ranges)):
+            # if abs(data.ranges[i] - old_data_hog1.ranges[i]) >= change_in_time:
+            #     points_to_be_converted.append(data.ranges[i])
+            # else:
+            #     points_to_be_converted.append(numpy.inf)
+
+            # calculate the variance of the points of the 5 frames at each angle
+            variance_between_points = numpy.var(
+                [old_data_duck1.ranges[i], old_data_duck2.ranges[i], old_data_duck3.ranges[i],
+                 old_data_duck4.ranges[i], data.ranges[i]])
+            # print(variance_between_points)
+
+            # if the variance exists and is greater than a threshold, add the point to another array
+            # this determines if the point is part of a moving object or not
+            if not math.isnan(variance_between_points) and variance_between_points >= min_variance:
+                points_to_be_converted.append(data.ranges[i])
+            else:
+
+                # append inf to make sure the point cloud does not display this angle
+                points_to_be_converted.append(numpy.inf)
+    else:
+        # print("all new")
+
+        # add old data to the arrays as a placeholder
+        old_data_duck1 = data
+        old_data_duck2 = data
+        old_data_duck3 = data
+        old_data_duck4 = data
+
+        # making sure that the first iteration results in no movement detected
+        for i in range(0, len(data.ranges)):
+            points_to_be_converted.append(numpy.inf)
+
+    # slide the histories of the laser scan one more array down (keeps the 5 most recent laser scans)
+    old_data_duck4 = old_data_duck3
+    old_data_duck3 = old_data_duck2
+    old_data_duck2 = old_data_duck1
+    old_data_duck1 = data
+
+    # init another laser scan just for the points that are tracked as movement
+    change_duck = LaserScan()
+    change_duck = copy.deepcopy(data)
+    change_duck.ranges = points_to_be_converted
+    # print(len(points_to_be_converted))
+
+    # make point clouds for the movement
+    pc_li_duck = make_PC_from_Laser_display(change_duck)
+
+    # make point clouds for the whole laser scan
+    pc_li_duck_all = make_PC_from_Laser_display(data)
+
+
 def make_PC_from_Laser_display(laser_in):
 
     # Initialize a point cloud object
@@ -302,7 +378,7 @@ def make_PC_from_Laser_display(laser_in):
 
 
 def combine_lasers():
-    global pc_li_hog, pc_display, pc_li_mouse, pc_li_snake
+    global pc_li_hog, pc_display, pc_li_mouse, pc_li_snake, pc_li_duck
 
     bg_pub = rospy.Publisher('/combined_movement', PointCloud, queue_size=10) # only displays the movement
     bg_pub_all = rospy.Publisher('/combined', PointCloud, queue_size=10) # displays the combined poitn cloud of all lasers
@@ -311,12 +387,12 @@ def combine_lasers():
 
     br = tf.TransformBroadcaster()
 
-
     callback_hog_laser_init(rospy.wait_for_message('/hog/scan0', LaserScan))
     # searches for the tf being published by the tf_publisher.py script
     try:
-        tf_listen.waitForTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp, rospy.Duration(5.0))
-        tf_listen.waitForTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp, rospy.Duration(5.0))
+        tf_listen.waitForTransform("/laser_hog", "/laser_snake", pc_li_hog.header.stamp, rospy.Duration(2.0))
+        tf_listen.waitForTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp, rospy.Duration(2.0))
+        # tf_listen.waitForTransform("/laser_hog", "/laser_duck", pc_li_hog.header.stamp, rospy.Duration(2.0))
     except:
         pass
 
@@ -325,10 +401,13 @@ def combine_lasers():
     snake_matrix = tf_transformer.fromTranslationRotation(snake_to_hog[0], snake_to_hog[1])
     mouse_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_mouse", pc_li_hog.header.stamp)
     mouse_matrix = tf_transformer.fromTranslationRotation(mouse_to_hog[0], mouse_to_hog[1])
+    # duck_to_hog = tf_listen.lookupTransform("/laser_hog", "/laser_duck", pc_li_hog.header.stamp)
+    # duck_matrix = tf_transformer.fromTranslationRotation(duck_to_hog[0], duck_to_hog[1])
 
     print(snake_to_hog)
     print(snake_matrix)
     print(mouse_to_hog)
+    print(mouse_matrix)
     # return
 
     while not rospy.is_shutdown():
@@ -337,6 +416,7 @@ def combine_lasers():
         callback_hog_laser(rospy.wait_for_message('/hog/scan0', LaserScan))
         callback_mouse_laser(rospy.wait_for_message('/mouse/scan0', LaserScan))
         callback_snake_laser(rospy.wait_for_message('/snake/scan0', LaserScan))
+        # callback_duck_laser(rospy.wait_for_message('/duck/scan0', LaserScan))
         pc_display = PointCloud()
         pc_display_all = PointCloud()
 
@@ -402,6 +482,26 @@ def combine_lasers():
             out2 = numpy.dot(mouse_matrix, num_point)
 
             pc_display_all.points.append(Point(out2[0], out2[1], out2[2]))
+
+        # updating the positions of the points in the mouse scan in accordance with the tf matrix
+        # same process as snake ^^^, except for duck
+        # for pt in pc_li_duck.points:
+        #     num_point[0] = pt.x
+        #     num_point[1] = pt.y
+        #     num_point[2] = pt.z
+        #
+        #     out2 = numpy.dot(duck_matrix, num_point)
+        #
+        #     pc_display.points.append(Point(out2[0], out2[1], out2[2]))
+        #
+        # for pt in pc_li_duck_all.points:
+        #     num_point[0] = pt.x
+        #     num_point[1] = pt.y
+        #     num_point[2] = pt.z
+        #
+        #     out2 = numpy.dot(duck_matrix, num_point)
+        #
+        #     pc_display_all.points.append(Point(out2[0], out2[1], out2[2]))
 
         pc_display.header = copy.deepcopy(pc_li_hog.header)
         pc_display.header.frame_id = "map"

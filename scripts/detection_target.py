@@ -17,7 +17,7 @@ from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
 # marks = MarkerArray()
 laserinput = []
 lastLaser = []
-show_time = 1
+show_time = 0
 ind_list = []
 r = float(sys.argv[4])
 center = (0, 0)
@@ -708,6 +708,7 @@ def triangle_finder():
             testMarks.markers[-1].header = lastLaser.header  # Header(frame_id="/map")
             testMarks.markers[-1].ns = "final_triangle"
             id += 1  # keep the ids unique
+            print("final triange")
 
     # Publish triangle
     triangle_marks.publish(testMarks)

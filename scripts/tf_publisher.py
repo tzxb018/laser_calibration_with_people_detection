@@ -151,12 +151,6 @@ def publish_tf():
     laser_sub_mouse = rospy.Subscriber("/mouse/scan0", LaserScan, callback_mouse_laser)
     laser_sub_snake = rospy.Subscriber("/snake/scan0", LaserScan, callback_snake_laser)
 
-    laser_pub_hog = rospy.Publisher("/hog/updatedScan", LaserScan, queue_size=1)
-    laser_pub_mouse = rospy.Publisher("/mouse/updatedScan", LaserScan, queue_size=1)
-    laser_pub_snake = rospy.Publisher("/snake/updatedScan", LaserScan, queue_size=1)
-    # laser_pub_duck = rospy.Publisher("/duck/updatedScan", LaserScan, queue_size=10)
-
-
     laser_target_finder = rospy.ServiceProxy('detection_target', Detection_target)
 
     # calls the service for finding the calibration target
@@ -216,10 +210,6 @@ def publish_tf():
     # br2 = tf.TransformBroadcaster()
     # print("tf3\n" + str(rer))
 
-    # ts = message_filters.ApproximateTimeSynchronizer([laser_sub_hog, laser_sub_mouse, laser_sub_snake],
-    #                                                  1, 1)
-
-    # bg_pub = rospy.Publisher('/combined', PointCloud, queue_size=10)
 
     pc_display.header.frame_id = "/map"
     while not rospy.is_shutdown():
@@ -266,13 +256,10 @@ def publish_tf():
                          "laser_snake",
                          "laser_snake_target")
 
-        # ts.registerCallback(callback_all)
         callback_hog_laser(rospy.wait_for_message('/hog/scan0', LaserScan))
         callback_mouse_laser(rospy.wait_for_message('/mouse/scan0', LaserScan))
         callback_snake_laser(rospy.wait_for_message('/snake/scan0', LaserScan))
         # callback_duck_laser(rospy.wait_for_message('/duck/scan0', LaserScan))
-
-
 
         # third tf (duck to hog)
         # br.sendTransform((rer.source_translation.x, rer.source_translation.y, 0),

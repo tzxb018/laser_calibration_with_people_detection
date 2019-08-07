@@ -3,3 +3,4 @@ string laser_topic
 geometry_msgs/Point point_a
 geometry_msgs/Point point_c
 
+
