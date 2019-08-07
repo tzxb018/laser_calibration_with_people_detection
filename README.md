@@ -28,7 +28,7 @@ Important Notes
     - If you are using the launch file, please go into the launch file and change the arguments in the following format:
       - length of shortest leg, length of longer leg, length of hypotnuse, length of radius of targets (all in meters)
       - If you are manually running each script, add the same agruments to the script command. 
-      - Ex: $ rosbag lc detection_target.py .57 .89 1.05 .07
+      - Ex: $ rosrun lc detection_target.py .57 .89 1.05 .07
 - The laser subscriber topics (explained after), were all namespaced into the following three names: hog, mouse, snake. 
     - If you are trying to use four lasers instead of three, go into the tf_publisher.py script and uncomment lines 170-172, 206-211, and 264-281. 
     - Also, go into people_detection.py script and uncomment lines 395, 404-405, 419, 488-504.
@@ -41,6 +41,8 @@ Subscribed Topics
   - one of the children lasers
 - /snake/scan0 
   - another one of the children lasers
+- /duck/scan0
+  - if you are running 4 lasers, this would be another child laser
 
 Published Topics
 -------------------
