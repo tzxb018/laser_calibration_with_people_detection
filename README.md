@@ -1,6 +1,7 @@
 Laser Calibration with People Detection
 ===========
-![ROS](https://img.shields.io/badge/ROS-Kinetic-brightgreen.svg)  ![OS](https://img.shields.io/badge/OS-Ubuntu%2016.04-orange.svg )
+![ROS](https://img.shields.io/badge/ROS-Kinetic-brightgreen.svg)  ![OS](https://img.shields.io/badge/OS-Ubuntu%2016.04-orange.svg ) ![GitHub top language](https://img.shields.io/github/languages/top/tzxb018/laser_calibration_with_people_detection?style=plastic)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/tzxb018/laser_calibration_with_people_detection?style=plastic)
 
 Overview
 ------------------
